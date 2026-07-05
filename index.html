@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人健康儀表板 (Fitness Tracker)</title>
+    <title>個人健康終極儀表板 V5</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary: #0ea5e9;
-            --primary-dark: #0284c7;
-            --bg-dark: #0f172a;
-            --bg-light: #f8fafc;
-            --text-dark: #1e293b;
-            --text-light: #64748b;
-            --border: #e2e8f0;
-            --red: #ef4444;
-            --green: #10b981;
+            --primary: #0ea5e9; --primary-dark: #0284c7;
+            --bg-dark: #0f172a; --bg-light: #f8fafc;
+            --sidebar-bg: #1e293b; --text-dark: #1e293b; --text-light: #64748b;
+            --border: #e2e8f0; --red: #ef4444; --green: #10b981;
+            --sidebar-width: 240px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background: var(--bg-light); color: var(--text-dark); padding-bottom: 80px; }
+        body { background: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; overflow-x: hidden; }
 
         /* 登入畫面 */
         #login-screen {
@@ -27,107 +24,153 @@
         }
         .login-box { background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 350px; }
         .pin-input { width: 100%; padding: 12px; font-size: 24px; text-align: center; letter-spacing: 8px; border: 2px solid var(--border); border-radius: 8px; margin: 15px 0; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
-        .btn:hover { background: var(--primary-dark); }
-        .btn-secondary { background: var(--text-light); }
         
-        /* 全局容器與導航 */
-        #app-container { display: none; max-width: 800px; margin: 0 auto; padding: 15px; }
-        .nav-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid var(--border);
-            display: flex; justify-content: space-around; padding: 10px 0; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-        }
-        .nav-item { text-align: center; font-size: 12px; color: var(--text-light); cursor: pointer; flex: 1; }
-        .nav-item.active { color: var(--primary); font-weight: bold; }
-        .nav-item span { display: block; font-size: 18px; margin-bottom: 2px; }
+        /* 通用按鈕 */
+        .btn { background: var(--primary); color: white; border: none; padding: 10px 16px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn:hover { background: var(--primary-dark); }
+        .btn-secondary { background: #e2e8f0; color: var(--text-dark); }
+        .btn-danger { background: var(--red); color: white; }
 
-        /* 內容卡片與區塊 */
+        /* 左側邊欄 (支援 iPad / 手機收起功能) */
+        #sidebar {
+            width: var(--sidebar-width); background: var(--sidebar-bg); color: white;
+            display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0;
+            transition: transform 0.3s ease; z-index: 5000; box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        #sidebar.collapsed { transform: translateX(-100%); }
+        .sidebar-header { padding: 20px; font-size: 16px; font-weight: bold; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; color: #38bdf8; }
+        .nav-list { list-style: none; padding: 15px 0; flex-grow: 1; overflow-y: auto; }
+        .nav-item { padding: 12px 20px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; color: #cbd5e1; transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background: var(--primary); color: white; font-weight: bold; border-left: 4px solid white; }
+        .collapse-btn { background: #334155; color: white; border: none; padding: 10px; text-align: center; cursor: pointer; font-size: 12px; width: 100%; }
+        
+        /* 手機版頂部展開導航欄 */
+        #top-header {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 50px; background: var(--bg-dark);
+            color: white; align-items: center; padding: 0 15px; z-index: 4000; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .hamburger { background: none; border: none; color: white; font-size: 24px; cursor: pointer; margin-right: 15px; }
+
+        /* 主內容區 */
+        #main-content { margin-left: var(--sidebar-width); flex-grow: 1; padding: 20px; max-width: 1000px; transition: margin-left 0.3s ease; width: calc(100% - var(--sidebar-width)); }
+        #main-content.expanded { margin-left: 0; width: 100%; }
+        
+        @media (max-width: 768px) {
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.mobile-open { transform: translateX(0); }
+            #top-header { display: flex; }
+            #main-content { margin-left: 0; width: 100%; margin-top: 50px; }
+        }
+
+        /* 卡片與視圖 */
         .section-view { display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 20px; }
         .section-view.active { display: block; }
         h2 { font-size: 18px; margin-bottom: 15px; color: var(--bg-dark); border-left: 4px solid var(--primary); padding-left: 8px; }
-        
-        /* 日曆設計 (週一為首) */
+        h3 { font-size: 15px; color: var(--primary-dark); margin: 15px 0 10px 0; }
+
+        /* 日曆 */
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; font-size: 16px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
         .cal-th { text-align: center; font-size: 12px; font-weight: bold; color: var(--text-light); padding: 5px 0; background: #f1f5f9; border-radius: 4px; }
         .cal-cell { min-height: 75px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; font-size: 12px; position: relative; background: white; }
         .cal-cell.other-month { background: #f8fafc; color: #cbd5e1; }
-        .cal-date-num { font-weight: bold; }
         .icons-box { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 4px; }
         .work-icon { font-size: 12px; background: #e0f2fe; border-radius: 3px; padding: 1px 3px; }
         .weight-tag { display: block; font-size: 10px; margin-top: 4px; padding: 2px; border-radius: 3px; text-align: center; font-weight: bold; }
         .tag-red { background: #fef2f2; color: var(--red); border: 1px solid #fca5a5; }
         .tag-green { background: #ecfdf5; color: var(--green); border: 1px solid #a7f3d0; }
 
-        /* 表單元素與 OCR */
+        /* 表單與 OCR */
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: var(--text-dark); }
-        input[type="text"], input[type="number"], input[type="date"], select {
-            width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: var(--bg-light);
-        }
+        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: var(--text-dark); }
+        input[type="text"], input[type="number"], input[type="date"], select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: var(--bg-light); }
         .ocr-box { border: 2px dashed var(--primary); padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 15px; background: #f0f9ff; }
         .ocr-status { font-size: 12px; color: var(--primary-dark); margin-top: 5px; font-weight: bold; }
 
-        /* 體重目標對比卡片 */
-        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+        /* 體重對比卡片 */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
         .stat-card { border: 1px solid var(--border); padding: 12px; border-radius: 8px; text-align: center; }
         .stat-val { font-size: 20px; font-weight: bold; margin: 4px 0; }
         .diff-badge { font-size: 11px; padding: 2px 6px; border-radius: 10px; font-weight: bold; display: inline-block; }
-        
-        /* 辛苦程度彈窗 (Modal) */
-        #modal-effort {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15,23,42,0.8); z-index: 99999; justify-content: center; align-items: center;
-        }
+
+        /* 圖表過濾器與容器 */
+        .chart-filter { display: flex; gap: 8px; margin-bottom: 15px; }
+        .chart-filter button { flex: 1; padding: 6px; font-size: 12px; }
+        .chart-filter button.active { background: var(--primary); color: white; }
+        .chart-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; position: relative; height: 260px; }
+
+        /* 動作選單庫卡片 */
+        .lib-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .lib-card { border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: #f8fafc; }
+        .lib-card h4 { color: var(--primary-dark); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; }
+        .action-pill { display: inline-block; background: white; border: 1px solid var(--border); padding: 6px 10px; border-radius: 20px; font-size: 12px; margin: 3px; cursor: pointer; transition: 0.2s; }
+        .action-pill:hover { border-color: var(--primary); background: #e0f2fe; }
+        .action-pill .del { color: var(--red); margin-left: 6px; font-weight: bold; }
+
+        /* 彈窗與載入 */
+        #modal-effort { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); z-index: 99999; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; }
         .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
         .score-btn { padding: 10px 0; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; cursor: pointer; background: #f8fafc; }
         .score-btn.active { background: var(--red); color: white; border-color: var(--red); }
-        
-        /* 載入指示器 */
-        #loading-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8); z-index: 100000; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; color: var(--primary);
-        }
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 100000; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; color: var(--primary); }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay">⏳ 資料存取中，請稍候...</div>
+    <div id="loading-overlay">⏳ 資料同步與運算中...</div>
+
+    <header id="top-header">
+        <button class="hamburger" onclick="toggleMobileSidebar()">☰</button>
+        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V5</span>
+    </header>
 
     <div id="login-screen">
         <div class="login-box">
             <h2>健康儀表板解鎖</h2>
             <p style="font-size: 12px; color: var(--text-light); margin-top: 5px;">請輸入 6 位 PIN 碼</p>
             <input type="password" id="pin-input" class="pin-input" maxlength="6" inputmode="numeric" placeholder="••••••">
-            <button class="btn" onclick="verifyPin()">登入系統</button>
+            <button class="btn" style="width:100%;" onclick="verifyPin()">登入系統</button>
             <p id="login-error" style="color: var(--red); font-size: 12px; margin-top: 10px; display: none;">PIN 碼錯誤！(預設: 123456)</p>
         </div>
     </div>
 
-    <div id="app-container">
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <span>💪 健身管理選單</span>
+            <button class="hamburger" style="font-size:18px; display:none;" id="close-sidebar-btn" onclick="toggleMobileSidebar()">✕</button>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item active" onclick="switchTab('tab-home', this)"><span>📅</span> 運動日曆</li>
+            <li class="nav-item" onclick="switchTab('tab-weight', this)"><span>⚖️</span> 體重與身體成分</li>
+            <li class="nav-item" onclick="switchTab('tab-run', this)"><span>🏃</span> 跑步紀錄</li>
+            <li class="nav-item" onclick="switchTab('tab-lift', this)"><span>🏋️</span> 重量訓練</li>
+            <li class="nav-item" onclick="switchTab('tab-pingpong', this)"><span>🏓</span> 乒乓球</li>
+            <li class="nav-item" onclick="switchTab('tab-charts-body', this); renderBodyCharts(7);"><span>📈</span> 身體數據圖表</li>
+            <li class="nav-item" onclick="switchTab('tab-charts-run', this); renderRunCharts(7);"><span>📊</span> 跑步數據圖表</li>
+            <li class="nav-item" onclick="switchTab('tab-actions-lib', this); renderActionsLibrary();"><span>📋</span> 重訓動作選單庫</li>
+        </ul>
+        <button class="collapse-btn" onclick="toggleSidebarCollapse()">◀ 收藏/收起表單</button>
+    </aside>
+
+    <main id="main-content">
         
         <section id="tab-home" class="section-view active">
             <h2>📅 我的運動與體重日曆</h2>
             <div class="calendar-header">
-                <button class="btn btn-secondary" style="width: auto; padding: 4px 10px;" onclick="changeMonth(-1)">◀ 上月</button>
+                <button class="btn btn-secondary" style="padding: 4px 10px;" onclick="changeMonth(-1)">◀ 上月</button>
                 <span id="cal-month-title">2026 年 7 月</span>
-                <button class="btn btn-secondary" style="width: auto; padding: 4px 10px;" onclick="changeMonth(1)">下月 ▶</button>
+                <button class="btn btn-secondary" style="padding: 4px 10px;" onclick="changeMonth(1)">下月 ▶</button>
             </div>
-            <div class="calendar-grid" id="calendar-headers">
-                <div class="cal-th">一</div><div class="cal-th">二</div><div class="cal-th">三</div><div class="cal-th">四</div><div class="cal-th">五</div><div class="cal-th">六</div><div class="cal-th">日</div>
-            </div>
+            <div class="calendar-grid"><div class="cal-th">一</div><div class="cal-th">二</div><div class="cal-th">三</div><div class="cal-th">四</div><div class="cal-th">五</div><div class="cal-th">六</div><div class="cal-th">日</div></div>
             <div class="calendar-grid" id="calendar-body"></div>
         </section>
 
         <section id="tab-weight" class="section-view">
-            <h2>⚖️ 體重與身體分析 (OCR)</h2>
-            <div class="form-group">
-                <label>選擇紀錄日期</label>
-                <input type="date" id="w-date">
-            </div>
+            <h2>⚖️ 體重與身體分析 (OCR 智能辨識)</h2>
+            <div class="form-group"><label>選擇紀錄日期</label><input type="date" id="w-date"></div>
             <div class="ocr-box">
-                <p style="font-size: 14px; font-weight: bold;">📸 上傳體脂計截圖自動填寫</p>
+                <p style="font-size: 14px; font-weight: bold;">📸 上傳體脂計截圖自動分析</p>
                 <input type="file" accept="image/*" onchange="runOCR(this, 'weight')" style="margin-top: 10px;">
                 <div id="ocr-status-weight" class="ocr-status"></div>
             </div>
@@ -140,18 +183,18 @@
                 <div class="form-group"><label>體年齡 (歲)</label><input type="number" id="w-age" oninput="calcWeightDiff()"></div>
             </div>
             
-            <h3 style="margin-top: 15px; font-size: 15px;">🎯 目標差距即時對比 (目標: 80kg / 20%)</h3>
-            <div class="stats-grid" id="weight-stats-box">
-                <div class="stat-card"><span>體重差距</span><div class="stat-val" id="diff-w">--</div></div>
-                <div class="stat-card"><span>體脂差距</span><div class="stat-val" id="diff-f">--</div></div>
-                <div class="stat-card"><span>肌肉量差距</span><div class="stat-val" id="diff-m">--</div></div>
-                <div class="stat-card"><span>內臟脂肪</span><div class="stat-val" id="diff-v">--</div></div>
+            <h3>🎯 25歲重訓男生目標差距 (體重80kg / 肌肉62.5kg / 內臟≤6)</h3>
+            <div class="stats-grid">
+                <div class="stat-card"><span>體重差距 (80 kg)</span><div class="stat-val" id="diff-w">--</div></div>
+                <div class="stat-card"><span>體脂差距 (20 %)</span><div class="stat-val" id="diff-f">--</div></div>
+                <div class="stat-card"><span>肌肉量差距 (62.5 kg)</span><div class="stat-val" id="diff-m">--</div></div>
+                <div class="stat-card"><span>內臟脂肪 (≤ 6)</span><div class="stat-val" id="diff-v">--</div></div>
             </div>
-            <button class="btn" style="margin-top: 20px;" onclick="submitWeight()">確認儲存體重紀錄</button>
+            <button class="btn" style="width:100%; margin-top:15px;" onclick="submitWeight()">確認儲存體重紀錄</button>
         </section>
 
         <section id="tab-run" class="section-view">
-            <h2>🏃‍♂️ 跑步紀錄 (有氧)</h2>
+            <h2>🏃‍♂️ 跑步紀錄 (支援心率與 OCR)</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group"><label>紀錄日期</label><input type="date" id="r-date"></div>
                 <div class="form-group"><label>跑步場地</label>
@@ -159,133 +202,165 @@
                 </div>
             </div>
             <div class="ocr-box">
-                <p style="font-size: 14px; font-weight: bold;">📸 上傳 Apple Fitness 截圖</p>
+                <p style="font-size: 14px; font-weight: bold;">📸 上傳 Apple Fitness / 手錶截圖</p>
                 <input type="file" accept="image/*" onchange="runOCR(this, 'run')" style="margin-top: 10px;">
                 <div id="ocr-status-run" class="ocr-status"></div>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>距離 (km) [可手動校正]</label><input type="number" step="0.01" id="r-dist"></div>
+                <div class="form-group"><label>距離 (km) [可修改]</label><input type="number" step="0.01" id="r-dist"></div>
                 <div class="form-group"><label>時間 (HH:MM:SS)</label><input type="text" id="r-time" placeholder="00:30:00"></div>
+                <div class="form-group"><label>平均心率 (bpm)</label><input type="number" id="r-hr" placeholder="例如: 145"></div>
+                <div class="form-group"><label>心率範圍</label><input type="text" id="r-hr-range" placeholder="例如: 125-168"></div>
                 <div class="form-group" style="grid-column: span 2;"><label>活動卡路里 (kcal)</label><input type="number" id="r-cal"></div>
             </div>
-            <button class="btn" style="margin-top: 15px;" onclick="triggerEffortModal('saveRunning')">下一步：填寫辛苦程度</button>
+            <button class="btn" style="width:100%;" onclick="triggerEffortModal('saveRunning')">下一步：填寫辛苦程度</button>
         </section>
 
         <section id="tab-lift" class="section-view">
-            <h2>🏋️ 重量訓練 (自訂與智能庫)</h2>
+            <h2>🏋️ 重量訓練 (智能選單)</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group"><label>訓練日期</label><input type="date" id="l-date"></div>
                 <div class="form-group"><label>訓練分期</label>
                     <select id="l-cat" onchange="filterActions()"><option value="胸三頭">胸和三頭</option><option value="背二頭">背和二頭</option><option value="腳">腳部訓練</option></select>
                 </div>
             </div>
+            <div id="quick-pills-container" style="margin-bottom: 10px;"></div>
             <div id="lift-items-container"></div>
-            <button class="btn btn-secondary" style="margin-bottom: 15px;" onclick="addLiftRow()">+ 新增動作動作列</button>
-            <button class="btn" onclick="triggerEffortModal('saveWeightlifting')">下一步：填寫辛苦程度並送出</button>
+            <button class="btn btn-secondary" style="margin-bottom: 15px; width:100%;" onclick="addLiftRow()">+ 新增動作列</button>
+            <button class="btn" style="width:100%;" onclick="triggerEffortModal('saveWeightlifting')">下一步：填寫辛苦程度並送出</button>
         </section>
 
         <section id="tab-pingpong" class="section-view">
             <h2>🏓 乒乓球紀錄</h2>
             <div class="form-group"><label>運動日期</label><input type="date" id="p-date"></div>
             <div class="form-group"><label>打球總時長 (分鐘)</label><input type="number" id="p-dur" placeholder="例如: 90"></div>
-            <button class="btn" style="margin-top: 15px;" onclick="triggerEffortModal('savePingPong')">下一步：填寫辛苦程度</button>
+            <button class="btn" style="width:100%; margin-top:15px;" onclick="triggerEffortModal('savePingPong')">下一步：填寫辛苦程度</button>
         </section>
 
-    </div>
+        <section id="tab-charts-body" class="section-view">
+            <h2>📈 身體成分趨勢圖表</h2>
+            <div class="chart-filter">
+                <button class="btn btn-secondary" onclick="renderBodyCharts(7, this)">一星期</button>
+                <button class="btn btn-secondary active" onclick="renderBodyCharts(30, this)">一個月</button>
+                <button class="btn btn-secondary" onclick="renderBodyCharts(365, this)">一年</button>
+            </div>
+            <div class="chart-box"><canvas id="chart-w"></canvas></div>
+            <div class="chart-box"><canvas id="chart-f"></canvas></div>
+            <div class="chart-box"><canvas id="chart-m"></canvas></div>
+            <div class="chart-box"><canvas id="chart-v"></canvas></div>
+        </section>
 
-    <nav class="nav-bar" id="bottom-nav" style="display: none;">
-        <div class="nav-item active" onclick="switchTab('tab-home', this)"><span>📅</span>日曆</div>
-        <div class="nav-item" onclick="switchTab('tab-weight', this)"><span>⚖️</span>體重</div>
-        <div class="nav-item" onclick="switchTab('tab-run', this)"><span>🏃</span>跑步</div>
-        <div class="nav-item" onclick="switchTab('tab-lift', this)"><span>🏋️</span>重訓</div>
-        <div class="nav-item" onclick="switchTab('tab-pingpong', this)"><span>🏓</span>乒乓球</div>
-    </nav>
+        <section id="tab-charts-run" class="section-view">
+            <h2>📊 跑步表現趨勢圖表</h2>
+            <div class="chart-filter">
+                <button class="btn btn-secondary" onclick="renderRunCharts(7, this)">一星期</button>
+                <button class="btn btn-secondary active" onclick="renderRunCharts(30, this)">一個月</button>
+                <button class="btn btn-secondary" onclick="renderRunCharts(365, this)">一年</button>
+            </div>
+            <div class="chart-box"><canvas id="chart-dist"></canvas></div>
+            <div class="chart-box"><canvas id="chart-speed"></canvas></div>
+            <div class="chart-box"><canvas id="chart-hr"></canvas></div>
+        </section>
 
-    <div id="modal-effort" style="display: none;">
+        <section id="tab-actions-lib" class="section-view">
+            <h2>📋 重訓動作專屬選單庫 (防入錯字/可刪除)</h2>
+            <p style="font-size: 13px; color: var(--text-light); margin-bottom: 15px;">點擊動作旁邊的「✕」可將其從資料庫永久刪除：</p>
+            <div class="lib-grid" id="lib-cards-box"></div>
+        </section>
+
+    </main>
+
+    <div id="modal-effort">
         <div class="modal-box">
             <h3>這趟運動感覺如何？</h3>
-            <p style="font-size: 12px; color: var(--text-light); margin-top: 4px;">請評估你剛剛完成的訓練辛苦程度</p>
-            <div class="score-grid" id="score-buttons">
-                </div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-light); margin-bottom: 15px;">
-                <span>1: 輕鬆活動</span><span>10: 極限力竭</span>
-            </div>
-            <button class="btn" onclick="confirmAndSubmit()">確定並送出試算表</button>
+            <p style="font-size: 12px; color: var(--text-light); margin-top: 4px;">請評估辛苦程度 (1-10 分)</p>
+            <div class="score-grid" id="score-buttons"></div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-light); margin-bottom: 15px;"><span>1: 輕鬆活動</span><span>10: 極限力竭</span></div>
+            <button class="btn" style="width:100%;" onclick="confirmAndSubmit()">確定並送出試算表</button>
         </div>
     </div>
 
+    <canvas id="ocr-canvas" style="display: none;"></canvas>
+
     <script>
         // ==========================================
-        // 請將此網址替換為你在 Google Apps Script 部署後的 Web App URL！
+        // 請將此替換為你 Google Apps Script V5 的 Web App URL！
         // ==========================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxqnKFULwNz4oNrhg7-51CwzMcvMHCoL-IC8RQR-0kyE0H_DNyrRWX4YIVM47T4lqJF/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycb...請替換你的API網址.../exec";
 
-        // 全局狀態
         let currentYear = new Date().getFullYear();
-        let currentMonth = new Date().getMonth(); // 0-based
+        let currentMonth = new Date().getMonth();
         let actionsLibrary = [];
         let calendarLog = {};
+        let weightHistory = [];
+        let runningHistory = [];
         let pendingSubmitAction = "";
-        let selectedEffortScore = 7; // 預設 7 分
+        let selectedEffortScore = 7;
+        let chartInstances = {};
 
-        // 登入驗證
+        // 登入
         function verifyPin() {
-            const input = document.getElementById('pin-input').value;
-            if (input === "123456") { // 你可在此修改預設密碼
+            if (document.getElementById('pin-input').value === "123456") {
                 document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-container').style.display = 'block';
-                document.getElementById('bottom-nav').style.display = 'flex';
                 initApp();
             } else {
                 document.getElementById('login-error').style.display = 'block';
             }
         }
 
-        // 初始化
         function initApp() {
             const todayStr = new Date().toISOString().split('T')[0];
-            document.getElementById('w-date').value = todayStr;
-            document.getElementById('r-date').value = todayStr;
-            document.getElementById('l-date').value = todayStr;
-            document.getElementById('p-date').value = todayStr;
-
+            ['w-date', 'r-date', 'l-date', 'p-date'].forEach(id => document.getElementById(id).value = todayStr);
             initScoreButtons();
-            addLiftRow(); // 預設增加一行重訓
+            addLiftRow();
             fetchInitialData();
+            if(window.innerWidth <= 768) document.getElementById('close-sidebar-btn').style.display = 'inline-block';
         }
 
-        // 呼叫後端 API 獲取資料
         function fetchInitialData() {
-            if(GAS_API_URL.includes("請替換")) return; // 如果還沒換網址就跳過
+            if(GAS_API_URL.includes("請替換")) return;
             showLoading(true);
             fetch(GAS_API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getInitialData" })
+                method: "POST", body: JSON.stringify({ action: "getInitialData" })
             }).then(res => res.json()).then(data => {
                 showLoading(false);
                 if (data.status === "success") {
                     actionsLibrary = data.actionsList || [];
                     calendarLog = data.calendarLog || {};
+                    weightHistory = data.weightHistory || [];
+                    runningHistory = data.runningHistory || [];
                     renderCalendar();
                     filterActions();
                 }
             }).catch(err => {
                 showLoading(false);
-                console.error("API 連線失敗，使用本地預設狀態", err);
+                console.error("API 連線失敗", err);
                 renderCalendar();
             });
         }
 
-        // 切換頁籤
+        // ================= 邊欄導航控制 =================
         function switchTab(tabId, el) {
             document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            el.classList.add('active');
+            if(el) el.classList.add('active');
+            if(window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('mobile-open');
             if(tabId === 'tab-home') renderCalendar();
         }
 
-        // ================= 日曆邏輯 (週一起始) =================
+        function toggleMobileSidebar() {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+        }
+
+        function toggleSidebarCollapse() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main-content');
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('expanded');
+        }
+
+        // ================= 日曆 =================
         function changeMonth(diff) {
             currentMonth += diff;
             if (currentMonth < 0) { currentMonth = 11; currentYear--; }
@@ -297,102 +372,120 @@
             document.getElementById('cal-month-title').innerText = `${currentYear} 年 ${currentMonth + 1} 月`;
             const body = document.getElementById('calendar-body');
             body.innerHTML = "";
-
             const firstDay = new Date(currentYear, currentMonth, 1);
-            let startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // 轉換為週一=0
+            let startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-            // 補齊前面的空白天數
-            for (let i = 0; i < startDayOfWeek; i++) {
-                body.innerHTML += `<div class="cal-cell other-month"></div>`;
-            }
+            for (let i = 0; i < startDayOfWeek; i++) body.innerHTML += `<div class="cal-cell other-month"></div>`;
 
-            // 渲染當月天數
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dateObj = new Date(currentYear, currentMonth, day);
-                const isMonday = dateObj.getDay() === 1;
+                const isMonday = new Date(currentYear, currentMonth, day).getDay() === 1;
                 const log = calendarLog[dateStr] || {};
-
                 let iconsHtml = "";
                 if (log.weightlifting) iconsHtml += `<span class="work-icon">🏋️</span>`;
                 if (log.run) iconsHtml += `<span class="work-icon">🏃</span>`;
                 if (log.pingpong) iconsHtml += `<span class="work-icon">🏓</span>`;
 
-                // 星期一體重提醒邏輯
                 let weightHtml = "";
-                if (isMonday) {
-                    if (log.weight) {
-                        weightHtml = `<span class="weight-tag tag-green">⚖️ ${log.weight}kg</span>`;
-                    } else {
-                        weightHtml = `<span class="weight-tag tag-red">⚠️ 記得量體重</span>`;
-                    }
-                } else if (log.weight) {
-                    weightHtml = `<span class="weight-tag tag-green">⚖️ ${log.weight}kg</span>`;
-                }
+                if (isMonday) weightHtml = log.weight ? `<span class="weight-tag tag-green">⚖️ ${log.weight}kg</span>` : `<span class="weight-tag tag-red">⚠️ 記得量體重</span>`;
+                else if (log.weight) weightHtml = `<span class="weight-tag tag-green">⚖️ ${log.weight}kg</span>`;
 
-                body.innerHTML += `
-                    <div class="cal-cell" onclick="alert('${dateStr} 紀錄狀態：\\n體重: ${log.weight || '無'}\\n有運動: ${iconsHtml ? '是' : '無'}');">
-                        <div class="cal-date-num">${day}</div>
-                        <div class="icons-box">${iconsHtml}</div>
-                        ${weightHtml}
-                    </div>
-                `;
+                body.innerHTML += `<div class="cal-cell"><div class="cal-date-num">${day}</div><div class="icons-box">${iconsHtml}</div>${weightHtml}</div>`;
             }
         }
 
-        // ================= OCR 截圖自動辨識 (Tesseract.js) =================
+        // ================= OCR 圖像優化與智能正則解析 =================
         function runOCR(input, type) {
             if (!input.files || !input.files[0]) return;
             const statusEl = document.getElementById(`ocr-status-${type}`);
-            statusEl.innerText = "🔍 圖片辨識中，請稍候約 3-5 秒...";
+            statusEl.innerText = "🔍 正在進行圖像增強與關鍵字分析...";
 
-            Tesseract.recognize(input.files[0], 'eng').then(({ data: { text } }) => {
-                statusEl.innerText = "✅ 辨識完成！已自動填入數字，請核對。";
-                console.log("OCR 結果:", text);
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // 透過 Canvas 轉灰階與提高對比，增強 Tesseract 準確度
+                    const canvas = document.getElementById('ocr-canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width; canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    for (let i = 0; i < imgData.data.length; i += 4) {
+                        let avg = (imgData.data[i] + imgData.data[i+1] + imgData.data[i+2]) / 3;
+                        avg = avg > 130 ? 255 : 0; // 高對比二值化
+                        imgData.data[i] = avg; imgData.data[i+1] = avg; imgData.data[i+2] = avg;
+                    }
+                    ctx.putImageData(imgData, 0, 0);
 
-                if (type === 'weight') {
-                    // 利用正規表達式抓取小數點與數字
-                    const nums = text.match(/\d+\.\d+|\d+/g) || [];
-                    if (nums.length > 0) {
-                        // 嘗試尋找介於 60-120 之間的數字當作體重
-                        const w = nums.find(n => parseFloat(n) >= 60 && parseFloat(n) <= 120);
-                        if(w) document.getElementById('w-val').value = w;
-                        
-                        // 嘗試尋找 15-40 之間的數字當作脂肪率
-                        const f = nums.find(n => parseFloat(n) >= 15 && parseFloat(n) <= 40 && n !== w);
-                        if(f) document.getElementById('w-fat').value = f;
-                        
-                        calcWeightDiff();
-                    }
-                } else if (type === 'run') {
-                    const nums = text.match(/\d+\.\d+|\d+/g) || [];
-                    if (nums.length > 0) {
-                        // 找 1-30 之間的數字作為公里數
-                        const dist = nums.find(n => parseFloat(n) >= 1 && parseFloat(n) <= 30);
-                        if(dist) document.getElementById('r-dist').value = dist;
-                        // 找幾百的數字當作卡路里
-                        const cal = nums.find(n => parseFloat(n) >= 100 && parseFloat(n) <= 2000);
-                        if(cal) document.getElementById('r-cal').value = cal;
-                    }
-                }
-            }).catch(err => {
-                statusEl.innerText = "❌ 辨識失敗，請手動填寫數字。";
-            });
+                    Tesseract.recognize(canvas.toDataURL('image/png'), 'eng+chi_tra').then(({ data: { text } }) => {
+                        statusEl.innerText = "✅ 辨識完成！系統已分析關鍵字並填入。";
+                        console.log("OCR Text:", text);
+                        parseOCRText(text, type);
+                    }).catch(() => {
+                        // 失敗則試直接用原圖
+                        Tesseract.recognize(file, 'eng').then(({ data: { text } }) => {
+                            statusEl.innerText = "✅ 辨識完成 (原圖模式)！";
+                            parseOCRText(text, type);
+                        }).catch(() => statusEl.innerText = "❌ 辨識失敗，請手動填寫。");
+                    });
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
-        // ================= 體重與目標差距計算 =================
+        function parseOCRText(text, type) {
+            const lines = text.split('\n');
+            const findNumNear = (keywords, min, max) => {
+                for (let line of lines) {
+                    if (keywords.some(k => line.toLowerCase().includes(k.toLowerCase()))) {
+                        const nums = line.match(/\d+\.\d+|\d+/g) || [];
+                        for (let n of nums) {
+                            let val = parseFloat(n);
+                            if (val >= min && val <= max) return val;
+                        }
+                    }
+                }
+                // Fallback: 在全文中尋找合理區間的數字
+                const allNums = text.match(/\d+\.\d+|\d+/g) || [];
+                return allNums.map(Number).find(val => val >= min && val <= max) || null;
+            };
+
+            if (type === 'weight') {
+                const w = findNumNear(['重', 'weight', 'kg'], 60, 110);
+                if(w) document.getElementById('w-val').value = w;
+                const f = findNumNear(['脂', 'fat', '%'], 10, 35);
+                if(f && f !== w) document.getElementById('w-fat').value = f;
+                const m = findNumNear(['肌', 'muscle'], 45, 75);
+                if(m && m !== w) document.getElementById('w-muscle').value = m;
+                const v = findNumNear(['內臟', 'visceral'], 1, 20);
+                if(v) document.getElementById('w-visceral').value = v;
+                const bmr = findNumNear(['代謝', 'bmr', 'kcal'], 1300, 2500);
+                if(bmr) document.getElementById('w-bmr').value = bmr;
+                calcWeightDiff();
+            } else if (type === 'run') {
+                const dist = findNumNear(['公里', 'km', '距離', 'dist'], 0.5, 42);
+                if(dist) document.getElementById('r-dist').value = dist;
+                const hr = findNumNear(['心率', 'hr', 'bpm', '平均'], 80, 200);
+                if(hr) document.getElementById('r-hr').value = hr;
+                const cal = findNumNear(['卡', 'kcal', 'cal'], 50, 2000);
+                if(cal) document.getElementById('r-cal').value = cal;
+            }
+        }
+
+        // ================= 25歲重訓男生目標差距 =================
         function calcWeightDiff() {
             const w = parseFloat(document.getElementById('w-val').value);
             const f = parseFloat(document.getElementById('w-fat').value);
             const m = parseFloat(document.getElementById('w-muscle').value);
             const v = parseFloat(document.getElementById('w-visceral').value);
 
-            // 目標：80kg / 20%體脂 / 61kg肌肉 / 9以下內臟脂肪
             updateDiffBadge('diff-w', w, 80.00, "kg", false);
             updateDiffBadge('diff-f', f, 20.0, "%", false);
-            updateDiffBadge('diff-m', m, 61.00, "kg", true); // 肌肉是越高越好
-            updateDiffBadge('diff-v', v, 9, "", false);
+            updateDiffBadge('diff-m', m, 62.50, "kg", true); // 肌肉量標準 62.5 kg
+            updateDiffBadge('diff-v', v, 6, "", false);     // 運動員內臟脂肪標準 ≤ 6
         }
 
         function updateDiffBadge(elId, current, target, unit, higherIsBetter) {
@@ -400,45 +493,37 @@
             if (isNaN(current)) { el.innerHTML = "--"; return; }
             const diff = (current - target).toFixed(2);
             let isGood = higherIsBetter ? (current >= target) : (current <= target);
-            
             let badgeClass = isGood ? "tag-green" : "tag-red";
             let sign = diff > 0 ? "+" : "";
             el.innerHTML = `<span class="diff-badge ${badgeClass}">${sign}${diff} ${unit}</span>`;
         }
 
-        // 儲存體重紀錄
         function submitWeight() {
-            const payload = {
+            sendDataToGAS("saveWeight", {
                 Date: document.getElementById('w-date').value,
-                Weight: document.getElementById('w-val').value,
-                BodyFat: document.getElementById('w-fat').value,
-                MuscleMass: document.getElementById('w-muscle').value,
-                BMR: document.getElementById('w-bmr').value,
-                VisceralFat: document.getElementById('w-visceral').value,
-                BodyAge: document.getElementById('w-age').value
-            };
-            sendDataToGAS("saveWeight", payload);
+                Weight: document.getElementById('w-val').value, BodyFat: document.getElementById('w-fat').value,
+                MuscleMass: document.getElementById('w-muscle').value, BMR: document.getElementById('w-bmr').value,
+                VisceralFat: document.getElementById('w-visceral').value, BodyAge: document.getElementById('w-age').value
+            });
         }
 
-        // ================= 重訓智能下拉與 PR 邏輯 =================
+        // ================= 重訓智能下拉與快速標籤 =================
         function addLiftRow() {
             const container = document.getElementById('lift-items-container');
             const rowId = 'lift-row-' + Date.now();
             const div = document.createElement('div');
             div.className = "form-group";
-            div.style = "background: white; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 10px;";
+            div.style = "background: #f8fafc; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 10px;";
             div.id = rowId;
             div.innerHTML = `
                 <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <input type="text" placeholder="輸入或選擇動作名稱..." class="lift-action-input" list="actions-datalist" onchange="checkActionPR(this)" style="flex: 2;">
+                    <input type="text" placeholder="輸入或點擊上方動作..." class="lift-action-input" list="actions-datalist" onchange="checkActionPR(this)" style="flex: 2;">
                     <select class="lift-type-select" style="flex: 1;"><option value="Free">Free</option><option value="Machine">Machine</option></select>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-                    <input type="number" placeholder="重量(kg)" class="lift-w">
-                    <input type="number" placeholder="次數" class="lift-r">
-                    <input type="number" placeholder="組數" class="lift-s">
+                    <input type="number" placeholder="重量(kg)" class="lift-w"><input type="number" placeholder="次數" class="lift-r"><input type="number" placeholder="組數" class="lift-s">
                 </div>
-                <div class="pr-hint" style="font-size: 11px; color: var(--text-light); margin-top: 6px;">💡 歷史最高紀錄：<span class="pr-text">請先輸入動作名稱...</span></div>
+                <div style="font-size: 11px; color: var(--text-light); margin-top: 6px;">💡 歷史最高紀錄：<span class="pr-text">請選擇動作...</span></div>
                 <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:none; border:none; color:var(--red); font-size:12px; margin-top:5px; cursor:pointer;">刪除此動作</button>
             `;
             container.appendChild(div);
@@ -448,134 +533,139 @@
         function filterActions() {
             const cat = document.getElementById('l-cat').value;
             let datalist = document.getElementById('actions-datalist');
-            if (!datalist) {
-                datalist = document.createElement('datalist');
-                datalist.id = "actions-datalist";
-                document.body.appendChild(datalist);
-            }
+            if (!datalist) { datalist = document.createElement('datalist'); datalist.id = "actions-datalist"; document.body.appendChild(datalist); }
             datalist.innerHTML = "";
+            const pillsBox = document.getElementById('quick-pills-container');
+            pillsBox.innerHTML = "<span style='font-size:12px; color:var(--text-light);'>快選：</span>";
+
             actionsLibrary.filter(a => a.category === cat).forEach(a => {
                 datalist.innerHTML += `<option value="${a.name}">${a.type}</option>`;
+                pillsBox.innerHTML += `<span class="action-pill" onclick="fillLastLiftInput('${a.name}', '${a.type}')">${a.name} (${a.type})</span>`;
             });
         }
 
-        // 查詢 PR 最高紀錄
+        function fillLastLiftInput(name, type) {
+            const inputs = document.querySelectorAll('.lift-action-input');
+            if (inputs.length > 0) {
+                const lastInput = inputs[inputs.length - 1];
+                lastInput.value = name;
+                lastInput.closest('.form-group').querySelector('.lift-type-select').value = type;
+                checkActionPR(lastInput);
+            }
+        }
+
         function checkActionPR(inputEl) {
             const actionName = inputEl.value;
-            const rowDiv = inputEl.closest('.form-group');
-            const prSpan = rowDiv.querySelector('.pr-text');
-            const typeSelect = rowDiv.querySelector('.lift-type-select');
-
-            // 如果本來就在庫裡，順便切換 Free/Machine
-            const found = actionsLibrary.find(a => a.name === actionName);
-            if (found) typeSelect.value = found.type;
-
-            if (!actionName) { prSpan.innerText = "請輸入名稱"; return; }
+            const prSpan = inputEl.closest('.form-group').querySelector('.pr-text');
+            if (!actionName) { prSpan.innerText = "請選擇動作"; return; }
             prSpan.innerText = "查詢中...";
+            if (GAS_API_URL.includes("請替換")) { prSpan.innerText = "-- (本地模式)"; return; }
 
-            if (GAS_API_URL.includes("請替換")) {
-                prSpan.innerText = "-- (本地模擬，未連接試算表)";
-                return;
-            }
-
-            fetch(GAS_API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getPR", actionName: actionName })
-            }).then(res => res.json()).then(data => {
-                if (data.status === "success" && data.pr) {
-                    prSpan.innerHTML = `<strong style="color:var(--primary);">${data.pr.weight} kg</strong> (${data.pr.reps}下, ${data.pr.sets}組)`;
-                } else {
-                    prSpan.innerText = "第一次做的新動作！歷史紀錄: --";
-                }
+            fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "getPR", actionName: actionName }) })
+            .then(res => res.json()).then(data => {
+                if (data.status === "success" && data.pr) prSpan.innerHTML = `<strong style="color:var(--primary);">${data.pr.weight} kg</strong> (${data.pr.reps}下, ${data.pr.sets}組)`;
+                else prSpan.innerText = "新動作！";
             }).catch(() => prSpan.innerText = "--");
         }
 
-        // ================= 辛苦程度彈窗與通用發送 =================
-        function initScoreButtons() {
-            const grid = document.getElementById('score-buttons');
-            grid.innerHTML = "";
-            for (let i = 1; i <= 10; i++) {
-                grid.innerHTML += `<div class="score-btn ${i===7?'active':''}" onclick="selectScore(${i}, this)">${i}</div>`;
+        // ================= 圖表渲染 (Chart.js) =================
+        function renderBodyCharts(days, btnEl) {
+            if (btnEl) {
+                btnEl.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btnEl.classList.add('active');
             }
+            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+            const filtered = weightHistory.filter(d => new Date(d.date) >= cutoff);
+            const labels = filtered.map(d => d.date.slice(5)); // MM-DD
+
+            drawChart('chart-w', '體重 (kg)', labels, filtered.map(d => d.weight), '#0ea5e9');
+            drawChart('chart-f', '體脂率 (%)', labels, filtered.map(d => d.fat), '#f59e0b');
+            drawChart('chart-m', '肌肉量 (kg)', labels, filtered.map(d => d.muscle), '#10b981');
+            drawChart('chart-v', '內臟脂肪', labels, filtered.map(d => d.visceral), '#ef4444');
         }
 
-        function selectScore(score, el) {
-            selectedEffortScore = score;
-            document.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active'));
-            el.classList.add('active');
+        function renderRunCharts(days, btnEl) {
+            if (btnEl) {
+                btnEl.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                btnEl.classList.add('active');
+            }
+            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+            const filtered = runningHistory.filter(d => new Date(d.date) >= cutoff);
+            const labels = filtered.map(d => d.date.slice(5));
+
+            drawChart('chart-dist', '跑步距離 (km)', labels, filtered.map(d => d.distance), '#3b82f6');
+            drawChart('chart-speed', '平均速率 (km/h)', labels, filtered.map(d => d.speed), '#8b5cf6');
+            drawChart('chart-hr', '平均心率 (bpm)', labels, filtered.map(d => d.hr), '#ec4899');
         }
 
-        function triggerEffortModal(actionType) {
-            pendingSubmitAction = actionType;
-            document.getElementById('modal-effort').style.display = 'flex';
+        function drawChart(canvasId, label, labels, data, color) {
+            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length ? labels : ['無數據'],
+                    datasets: [{ label: label, data: data.length ? data : [0], borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.3 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: false } } }
+            });
         }
+
+        // ================= 重訓動作選單庫渲染與刪除 =================
+        function renderActionsLibrary() {
+            const box = document.getElementById('lib-cards-box');
+            box.innerHTML = "";
+            ['胸三頭', '背二頭', '腳'].forEach(cat => {
+                const list = actionsLibrary.filter(a => a.category === cat);
+                let pills = list.map(a => `<span class="action-pill">${a.name} (${a.type}) <span class="del" onclick="deleteAction('${a.name}')">✕</span></span>`).join('');
+                box.innerHTML += `<div class="lib-card"><h4>${cat === '胸三頭' ? '💥 胸和三頭' : (cat === '背二頭' ? '🦅 背和二頭' : '🦵 腳部訓練')}</h4>${pills || '<span style="font-size:12px; color:#94a3b8;">暫無紀錄</span>'}</div>`;
+            });
+        }
+
+        function deleteAction(name) {
+            if (!confirm(`確定要從資料庫刪除動作「${name}」嗎？`)) return;
+            sendDataToGAS("deleteAction", { actionName: name });
+        }
+
+        // ================= 辛苦程度評分與發送 =================
+        function initScoreButtons() {
+            const grid = document.getElementById('score-buttons'); grid.innerHTML = "";
+            for (let i = 1; i <= 10; i++) grid.innerHTML += `<div class="score-btn ${i===7?'active':''}" onclick="selectScore(${i}, this)">${i}</div>`;
+        }
+        function selectScore(score, el) { selectedEffortScore = score; document.querySelectorAll('.score-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+        function triggerEffortModal(type) { pendingSubmitAction = type; document.getElementById('modal-effort').style.display = 'flex'; }
 
         function confirmAndSubmit() {
             document.getElementById('modal-effort').style.display = 'none';
-            let payload = null;
-
             if (pendingSubmitAction === "saveRunning") {
-                payload = {
-                    Date: document.getElementById('r-date').value,
-                    Location: document.getElementById('r-loc').value,
-                    Distance: document.getElementById('r-dist').value,
-                    Duration: document.getElementById('r-time').value,
-                    Calories: document.getElementById('r-cal').value,
-                    EffortScore: selectedEffortScore
-                };
-                sendDataToGAS("saveRunning", payload);
+                sendDataToGAS("saveRunning", {
+                    Date: document.getElementById('r-date').value, Location: document.getElementById('r-loc').value,
+                    Distance: document.getElementById('r-dist').value, Duration: document.getElementById('r-time').value,
+                    AvgHeartRate: document.getElementById('r-hr').value, HeartRateRange: document.getElementById('r-hr-range').value,
+                    Calories: document.getElementById('r-cal').value, EffortScore: selectedEffortScore
+                });
             } else if (pendingSubmitAction === "savePingPong") {
-                payload = {
-                    Date: document.getElementById('p-date').value,
-                    Duration: document.getElementById('p-dur').value,
-                    EffortScore: selectedEffortScore
-                };
-                sendDataToGAS("savePingPong", payload);
+                sendDataToGAS("savePingPong", { Date: document.getElementById('p-date').value, Duration: document.getElementById('p-dur').value, EffortScore: selectedEffortScore });
             } else if (pendingSubmitAction === "saveWeightlifting") {
-                const date = document.getElementById('l-date').value;
-                const cat = document.getElementById('l-cat').value;
-                const rows = document.querySelectorAll('#lift-items-container .form-group');
+                const date = document.getElementById('l-date').value; const cat = document.getElementById('l-cat').value;
                 const list = [];
-                rows.forEach(r => {
+                document.querySelectorAll('#lift-items-container .form-group').forEach(r => {
                     const name = r.querySelector('.lift-action-input').value;
-                    if (name) {
-                        list.push({
-                            Date: date, Category: cat, ActionName: name,
-                            Type: r.querySelector('.lift-type-select').value,
-                            Weight: r.querySelector('.lift-w').value,
-                            Reps: r.querySelector('.lift-r').value,
-                            Sets: r.querySelector('.lift-s').value,
-                            EffortScore: selectedEffortScore
-                        });
-                    }
+                    if (name) list.push({ Date: date, Category: cat, ActionName: name, Type: r.querySelector('.lift-type-select').value, Weight: r.querySelector('.lift-w').value, Reps: r.querySelector('.lift-r').value, Sets: r.querySelector('.lift-s').value, EffortScore: selectedEffortScore });
                 });
                 sendDataToGAS("saveWeightlifting", list);
             }
         }
 
-        // 發送 API 至 Google Apps Script
         function sendDataToGAS(action, payload) {
-            if (GAS_API_URL.includes("請替換")) {
-                alert("⚠️ 請先將 HTML 代碼裡的 GAS_API_URL 替換為你在 Google 部署的真實網址！\n\n目前模擬資料存檔成功！");
-                return;
-            }
+            if (GAS_API_URL.includes("請替換")) { alert("⚠️ 請先將 HTML 裡的 GAS_API_URL 替換為你的 API 網址！"); return; }
             showLoading(true);
-            fetch(GAS_API_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: action, payload: payload })
-            }).then(res => res.json()).then(data => {
-                showLoading(false);
-                alert("🎉 " + (data.message || "資料存檔成功！"));
-                fetchInitialData(); // 重新整理日曆
-            }).catch(err => {
-                showLoading(false);
-                alert("❌ 連線錯誤，請檢查試算表權限或網路狀態！");
-            });
+            fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action, payload, actionName: payload.actionName }) })
+            .then(res => res.json()).then(data => {
+                showLoading(false); alert("🎉 " + (data.message || "成功！")); fetchInitialData();
+            }).catch(() => { showLoading(false); alert("❌ 連線錯誤！"); });
         }
-
-        function showLoading(show) {
-            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-        }
+        function showLoading(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
     </script>
 </body>
 </html>
