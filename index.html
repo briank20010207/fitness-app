@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人健康終極儀表板 V5</title>
+    <title>個人健康終極儀表板 V6</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -17,7 +17,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         body { background: var(--bg-light); color: var(--text-dark); display: flex; min-height: 100vh; overflow-x: hidden; }
 
-        /* 登入畫面 */
         #login-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-dark); display: flex; justify-content: center; align-items: center; z-index: 10000;
@@ -25,13 +24,12 @@
         .login-box { background: white; padding: 30px; border-radius: 12px; text-align: center; width: 90%; max-width: 350px; }
         .pin-input { width: 100%; padding: 12px; font-size: 24px; text-align: center; letter-spacing: 8px; border: 2px solid var(--border); border-radius: 8px; margin: 15px 0; }
         
-        /* 通用按鈕 */
         .btn { background: var(--primary); color: white; border: none; padding: 10px 16px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn:hover { background: var(--primary-dark); }
         .btn-secondary { background: #e2e8f0; color: var(--text-dark); }
         .btn-danger { background: var(--red); color: white; }
 
-        /* 左側邊欄 (支援 iPad / 手機收起功能) */
+        /* 左側邊欄 */
         #sidebar {
             width: var(--sidebar-width); background: var(--sidebar-bg); color: white;
             display: flex; flex-direction: column; position: fixed; height: 100vh; left: 0; top: 0;
@@ -44,7 +42,6 @@
         .nav-item:hover, .nav-item.active { background: var(--primary); color: white; font-weight: bold; border-left: 4px solid white; }
         .collapse-btn { background: #334155; color: white; border: none; padding: 10px; text-align: center; cursor: pointer; font-size: 12px; width: 100%; }
         
-        /* 手機版頂部展開導航欄 */
         #top-header {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 50px; background: var(--bg-dark);
             color: white; align-items: center; padding: 0 15px; z-index: 4000; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -62,16 +59,15 @@
             #main-content { margin-left: 0; width: 100%; margin-top: 50px; }
         }
 
-        /* 卡片與視圖 */
         .section-view { display: none; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 20px; }
         .section-view.active { display: block; }
         h2 { font-size: 18px; margin-bottom: 15px; color: var(--bg-dark); border-left: 4px solid var(--primary); padding-left: 8px; }
         h3 { font-size: 15px; color: var(--primary-dark); margin: 15px 0 10px 0; }
 
-        /* 日曆 */
+        /* 日曆 (日一二三四五六) */
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; font-size: 16px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-        .cal-th { text-align: center; font-size: 12px; font-weight: bold; color: var(--text-light); padding: 5px 0; background: #f1f5f9; border-radius: 4px; }
+        .cal-th { text-align: center; font-size: 13px; font-weight: bold; color: var(--primary-dark); padding: 8px 0; background: #e0f2fe; border-radius: 4px; }
         .cal-cell { min-height: 75px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; font-size: 12px; position: relative; background: white; }
         .cal-cell.other-month { background: #f8fafc; color: #cbd5e1; }
         .icons-box { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 4px; }
@@ -80,26 +76,24 @@
         .tag-red { background: #fef2f2; color: var(--red); border: 1px solid #fca5a5; }
         .tag-green { background: #ecfdf5; color: var(--green); border: 1px solid #a7f3d0; }
 
-        /* 表單與 OCR */
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: var(--text-dark); }
         input[type="text"], input[type="number"], input[type="date"], select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: var(--bg-light); }
         .ocr-box { border: 2px dashed var(--primary); padding: 15px; text-align: center; border-radius: 8px; margin-bottom: 15px; background: #f0f9ff; }
         .ocr-status { font-size: 12px; color: var(--primary-dark); margin-top: 5px; font-weight: bold; }
 
-        /* 體重對比卡片 */
         .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px; }
         .stat-card { border: 1px solid var(--border); padding: 12px; border-radius: 8px; text-align: center; }
         .stat-val { font-size: 20px; font-weight: bold; margin: 4px 0; }
         .diff-badge { font-size: 11px; padding: 2px 6px; border-radius: 10px; font-weight: bold; display: inline-block; }
 
-        /* 圖表過濾器與容器 */
-        .chart-filter { display: flex; gap: 8px; margin-bottom: 15px; }
-        .chart-filter button { flex: 1; padding: 6px; font-size: 12px; }
+        /* 圖表導航列 */
+        .chart-nav { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .chart-filter { display: flex; gap: 6px; }
+        .chart-filter button { padding: 6px 12px; font-size: 12px; }
         .chart-filter button.active { background: var(--primary); color: white; }
-        .chart-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; position: relative; height: 260px; }
+        .chart-box { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; height: 260px; }
 
-        /* 動作選單庫卡片 */
         .lib-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
         .lib-card { border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: #f8fafc; }
         .lib-card h4 { color: var(--primary-dark); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; }
@@ -107,7 +101,6 @@
         .action-pill:hover { border-color: var(--primary); background: #e0f2fe; }
         .action-pill .del { color: var(--red); margin-left: 6px; font-weight: bold; }
 
-        /* 彈窗與載入 */
         #modal-effort { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); z-index: 99999; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; }
         .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
@@ -118,11 +111,11 @@
 </head>
 <body>
 
-    <div id="loading-overlay">⏳ 資料同步與運算中...</div>
+    <div id="loading-overlay">⏳ 資料同步與香港時區校準中...</div>
 
     <header id="top-header">
         <button class="hamburger" onclick="toggleMobileSidebar()">☰</button>
-        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V5</span>
+        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V6</span>
     </header>
 
     <div id="login-screen">
@@ -146,15 +139,16 @@
             <li class="nav-item" onclick="switchTab('tab-run', this)"><span>🏃</span> 跑步紀錄</li>
             <li class="nav-item" onclick="switchTab('tab-lift', this)"><span>🏋️</span> 重量訓練</li>
             <li class="nav-item" onclick="switchTab('tab-pingpong', this)"><span>🏓</span> 乒乓球</li>
-            <li class="nav-item" onclick="switchTab('tab-charts-body', this); renderBodyCharts(7);"><span>📈</span> 身體數據圖表</li>
-            <li class="nav-item" onclick="switchTab('tab-charts-run', this); renderRunCharts(7);"><span>📊</span> 跑步數據圖表</li>
+            <li class="nav-item" onclick="switchTab('tab-charts-body', this); initChartNav('body');"><span>📈</span> 身體數據圖表</li>
+            <li class="nav-item" onclick="switchTab('tab-charts-run', this); initChartNav('run');"><span>📊</span> 跑步數據圖表</li>
             <li class="nav-item" onclick="switchTab('tab-actions-lib', this); renderActionsLibrary();"><span>📋</span> 重訓動作選單庫</li>
         </ul>
-        <button class="collapse-btn" onclick="toggleSidebarCollapse()">◀ 收藏/收起表單</button>
+        <button class="collapse-btn" onclick="toggleSidebarCollapse()">◀ 收起左側表單</button>
     </aside>
 
     <main id="main-content">
-        
+        <button id="desktop-reopen-btn" class="btn btn-secondary" style="display:none; margin-bottom: 15px; font-weight:bold; background:#e0f2fe; color:var(--primary-dark);" onclick="toggleSidebarCollapse()">☰ 展開左側表單</button>
+
         <section id="tab-home" class="section-view active">
             <h2>📅 我的運動與體重日曆</h2>
             <div class="calendar-header">
@@ -162,7 +156,7 @@
                 <span id="cal-month-title">2026 年 7 月</span>
                 <button class="btn btn-secondary" style="padding: 4px 10px;" onclick="changeMonth(1)">下月 ▶</button>
             </div>
-            <div class="calendar-grid"><div class="cal-th">一</div><div class="cal-th">二</div><div class="cal-th">三</div><div class="cal-th">四</div><div class="cal-th">五</div><div class="cal-th">六</div><div class="cal-th">日</div></div>
+            <div class="calendar-grid"><div class="cal-th">日</div><div class="cal-th">一</div><div class="cal-th">二</div><div class="cal-th">三</div><div class="cal-th">四</div><div class="cal-th">五</div><div class="cal-th">六</div></div>
             <div class="calendar-grid" id="calendar-body"></div>
         </section>
 
@@ -182,7 +176,6 @@
                 <div class="form-group"><label>內臟脂肪</label><input type="number" id="w-visceral" oninput="calcWeightDiff()"></div>
                 <div class="form-group"><label>體年齡 (歲)</label><input type="number" id="w-age" oninput="calcWeightDiff()"></div>
             </div>
-            
             <h3>🎯 25歲重訓男生目標差距 (體重80kg / 肌肉62.5kg / 內臟≤6)</h3>
             <div class="stats-grid">
                 <div class="stat-card"><span>體重差距 (80 kg)</span><div class="stat-val" id="diff-w">--</div></div>
@@ -217,7 +210,7 @@
         </section>
 
         <section id="tab-lift" class="section-view">
-            <h2>🏋️ 重量訓練 (智能選單)</h2>
+            <h2>🏋️ 重量訓練 (實體選單 + 自訂動作)</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="form-group"><label>訓練日期</label><input type="date" id="l-date"></div>
                 <div class="form-group"><label>訓練分期</label>
@@ -238,11 +231,18 @@
         </section>
 
         <section id="tab-charts-body" class="section-view">
-            <h2>📈 身體成分趨勢圖表</h2>
-            <div class="chart-filter">
-                <button class="btn btn-secondary" onclick="renderBodyCharts(7, this)">一星期</button>
-                <button class="btn btn-secondary active" onclick="renderBodyCharts(30, this)">一個月</button>
-                <button class="btn btn-secondary" onclick="renderBodyCharts(365, this)">一年</button>
+            <h2>📈 身體成分趨勢圖表 (顯示實際記錄數字)</h2>
+            <div class="chart-nav">
+                <div class="chart-filter">
+                    <button class="btn btn-secondary active" onclick="setChartMode('body', 'week', this)">一星期</button>
+                    <button class="btn btn-secondary" onclick="setChartMode('body', 'month', this)">一個月</button>
+                    <button class="btn btn-secondary" onclick="setChartMode('body', 'year', this)">一年</button>
+                </div>
+                <div>
+                    <button class="btn btn-secondary" style="padding:4px 10px;" onclick="stepChartDate('body', -1)">◀</button>
+                    <span id="chart-date-label-body" style="font-weight:bold; font-size:13px; margin:0 8px;">載入中...</span>
+                    <button class="btn btn-secondary" style="padding:4px 10px;" onclick="stepChartDate('body', 1)">▶</button>
+                </div>
             </div>
             <div class="chart-box"><canvas id="chart-w"></canvas></div>
             <div class="chart-box"><canvas id="chart-f"></canvas></div>
@@ -251,11 +251,18 @@
         </section>
 
         <section id="tab-charts-run" class="section-view">
-            <h2>📊 跑步表現趨勢圖表</h2>
-            <div class="chart-filter">
-                <button class="btn btn-secondary" onclick="renderRunCharts(7, this)">一星期</button>
-                <button class="btn btn-secondary active" onclick="renderRunCharts(30, this)">一個月</button>
-                <button class="btn btn-secondary" onclick="renderRunCharts(365, this)">一年</button>
+            <h2>📊 跑步表現趨勢圖表 (顯示實際記錄數字)</h2>
+            <div class="chart-nav">
+                <div class="chart-filter">
+                    <button class="btn btn-secondary active" onclick="setChartMode('run', 'week', this)">一星期</button>
+                    <button class="btn btn-secondary" onclick="setChartMode('run', 'month', this)">一個月</button>
+                    <button class="btn btn-secondary" onclick="setChartMode('run', 'year', this)">一年</button>
+                </div>
+                <div>
+                    <button class="btn btn-secondary" style="padding:4px 10px;" onclick="stepChartDate('run', -1)">◀</button>
+                    <span id="chart-date-label-run" style="font-weight:bold; font-size:13px; margin:0 8px;">載入中...</span>
+                    <button class="btn btn-secondary" style="padding:4px 10px;" onclick="stepChartDate('run', 1)">▶</button>
+                </div>
             </div>
             <div class="chart-box"><canvas id="chart-dist"></canvas></div>
             <div class="chart-box"><canvas id="chart-speed"></canvas></div>
@@ -267,7 +274,6 @@
             <p style="font-size: 13px; color: var(--text-light); margin-bottom: 15px;">點擊動作旁邊的「✕」可將其從資料庫永久刪除：</p>
             <div class="lib-grid" id="lib-cards-box"></div>
         </section>
-
     </main>
 
     <div id="modal-effort">
@@ -284,9 +290,9 @@
 
     <script>
         // ==========================================
-        // 請將此替換為你 Google Apps Script V5 的 Web App URL！
+        // ⚠️ 請將此替換為你 Google Apps Script V6 的最新 Web App URL！
         // ==========================================
-        const GAS_API_URL = "https://script.google.com/macros/library/d/13AY7BbbAFUfKPnTKfGEottCVHGQBWxwNFEFFvrsz4D_gYMFlO2zB4yIL/3";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxqnKFULwNz4oNrhg7-51CwzMcvMHCoL-IC8RQR-0kyE0H_DNyrRWX4YIVM47T4lqJF/exec";
 
         let currentYear = new Date().getFullYear();
         let currentMonth = new Date().getMonth();
@@ -298,7 +304,12 @@
         let selectedEffortScore = 7;
         let chartInstances = {};
 
-        // 登入
+        // 圖表導航狀態
+        let chartState = {
+            body: { mode: 'week', offset: 0 },
+            run:  { mode: 'week', offset: 0 }
+        };
+
         function verifyPin() {
             if (document.getElementById('pin-input').value === "123456") {
                 document.getElementById('login-screen').style.display = 'none';
@@ -339,7 +350,7 @@
             });
         }
 
-        // ================= 邊欄導航控制 =================
+        // ================= 邊欄導航與電腦版展開按鈕 =================
         function switchTab(tabId, el) {
             document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -356,11 +367,19 @@
         function toggleSidebarCollapse() {
             const sidebar = document.getElementById('sidebar');
             const main = document.getElementById('main-content');
+            const reopenBtn = document.getElementById('desktop-reopen-btn');
             sidebar.classList.toggle('collapsed');
             main.classList.toggle('expanded');
+            
+            // 當在電腦版收起邊欄時，自動顯示「☰ 展開左側表單」按鈕！
+            if (sidebar.classList.contains('collapsed') && window.innerWidth > 768) {
+                reopenBtn.style.display = 'inline-block';
+            } else {
+                reopenBtn.style.display = 'none';
+            }
         }
 
-        // ================= 日曆 =================
+        // ================= 日曆 (週日排第一格：日一二三四五六) =================
         function changeMonth(diff) {
             currentMonth += diff;
             if (currentMonth < 0) { currentMonth = 11; currentYear--; }
@@ -373,7 +392,8 @@
             const body = document.getElementById('calendar-body');
             body.innerHTML = "";
             const firstDay = new Date(currentYear, currentMonth, 1);
-            let startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            // JS 中 getDay() 正好是 0=週日, 1=週一... 剛好完全對應「日一二三四五六」需要空出的格數！
+            let startDayOfWeek = firstDay.getDay(); 
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
             for (let i = 0; i < startDayOfWeek; i++) body.innerHTML += `<div class="cal-cell other-month"></div>`;
@@ -395,18 +415,202 @@
             }
         }
 
-        // ================= OCR 圖像優化與智能正則解析 =================
+        // ================= 重訓實體下拉選單 + 自訂動作 =================
+        function addLiftRow() {
+            const container = document.getElementById('lift-items-container');
+            const rowId = 'lift-row-' + Date.now();
+            const div = document.createElement('div');
+            div.className = "form-group";
+            div.style = "background: #f8fafc; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 10px;";
+            div.id = rowId;
+            div.innerHTML = `
+                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                    <select class="lift-action-select" style="flex: 2;" onchange="handleActionSelect(this)">
+                        <option value="">-- 點此選擇曾做過的動作 --</option>
+                    </select>
+                    <input type="text" placeholder="✍️ 請輸入自訂新動作名稱..." class="lift-action-custom" style="display: none; flex: 2;" onchange="checkActionPR(this)">
+                    <select class="lift-type-select" style="flex: 1;"><option value="Free">Free</option><option value="Machine">Machine</option></select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
+                    <input type="number" placeholder="重量(kg)" class="lift-w"><input type="number" placeholder="次數" class="lift-r"><input type="number" placeholder="組數" class="lift-s">
+                </div>
+                <div style="font-size: 11px; color: var(--text-light); margin-top: 6px;">💡 歷史最高紀錄：<span class="pr-text">請選擇動作...</span></div>
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:none; border:none; color:var(--red); font-size:12px; margin-top:5px; cursor:pointer;">刪除此動作</button>
+            `;
+            container.appendChild(div);
+            filterActions();
+        }
+
+        function filterActions() {
+            const cat = document.getElementById('l-cat').value;
+            const pillsBox = document.getElementById('quick-pills-container');
+            pillsBox.innerHTML = "<span style='font-size:12px; color:var(--text-light);'>快選標籤：</span>";
+
+            const filteredList = actionsLibrary.filter(a => a.category === cat);
+            
+            document.querySelectorAll('.lift-action-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = `<option value="">-- 點此選擇曾做過的動作 --</option>`;
+                filteredList.forEach(a => {
+                    select.innerHTML += `<option value="${a.name}" data-type="${a.type}">${a.name} (${a.type})</option>`;
+                });
+                select.innerHTML += `<option value="NEW_CUSTOM" style="font-weight:bold; color:var(--primary);">➕ [新增 / 輸入自訂新動作...]</option>`;
+                if(currentVal) select.value = currentVal;
+            });
+
+            filteredList.forEach(a => {
+                pillsBox.innerHTML += `<span class="action-pill" onclick="quickSelectAction('${a.name}', '${a.type}')">${a.name} (${a.type})</span>`;
+            });
+        }
+
+        function handleActionSelect(selectEl) {
+            const customInput = selectEl.parentElement.querySelector('.lift-action-custom');
+            const typeSelect = selectEl.parentElement.querySelector('.lift-type-select');
+            
+            if (selectEl.value === "NEW_CUSTOM") {
+                selectEl.style.display = "none";
+                customInput.style.display = "block";
+                customInput.focus();
+            } else if (selectEl.value !== "") {
+                const selectedOpt = selectEl.options[selectEl.selectedIndex];
+                if (selectedOpt && selectedOpt.getAttribute('data-type')) {
+                    typeSelect.value = selectedOpt.getAttribute('data-type');
+                }
+                checkActionPR(selectEl);
+            }
+        }
+
+        function quickSelectAction(name, type) {
+            const rows = document.querySelectorAll('#lift-items-container .form-group');
+            if (rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                const selectEl = lastRow.querySelector('.lift-action-select');
+                const customInput = lastRow.querySelector('.lift-action-custom');
+                const typeSelect = lastRow.querySelector('.lift-type-select');
+                
+                selectEl.style.display = "block";
+                customInput.style.display = "none";
+                selectEl.value = name;
+                typeSelect.value = type;
+                checkActionPR(selectEl);
+            }
+        }
+
+        function checkActionPR(inputEl) {
+            let actionName = inputEl.value;
+            if (actionName === "NEW_CUSTOM") return;
+            const prSpan = inputEl.closest('.form-group').querySelector('.pr-text');
+            if (!actionName) { prSpan.innerText = "請選擇動作"; return; }
+            prSpan.innerText = "查詢中...";
+            if (GAS_API_URL.includes("請替換")) { prSpan.innerText = "-- (本地模式)"; return; }
+
+            fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "getPR", actionName: actionName }) })
+            .then(res => res.json()).then(data => {
+                if (data.status === "success" && data.pr) prSpan.innerHTML = `<strong style="color:var(--primary);">${data.pr.weight} kg</strong> (${data.pr.reps}下, ${data.pr.sets}組)`;
+                else prSpan.innerText = "新動作！";
+            }).catch(() => prSpan.innerText = "--");
+        }
+
+        // ================= 圖表時間區間導航與真實數字顯示 =================
+        function initChartNav(type) {
+            chartState[type].offset = 0;
+            updateChartDisplay(type);
+        }
+
+        function setChartMode(type, mode, btnEl) {
+            chartState[type].mode = mode;
+            chartState[type].offset = 0;
+            btnEl.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
+            updateChartDisplay(type);
+        }
+
+        function stepChartDate(type, step) {
+            chartState[type].offset += step;
+            updateChartDisplay(type);
+        }
+
+        function updateChartDisplay(type) {
+            const state = chartState[type];
+            const now = new Date();
+            let startDate, endDate, labelText = "";
+
+            if (state.mode === 'week') {
+                // 以週日為該週起點
+                const currentDayOfWeek = now.getDay();
+                const sunday = new Date(now);
+                sunday.setDate(now.getDate() - currentDayOfWeek + (state.offset * 7));
+                const saturday = new Date(sunday);
+                saturday.setDate(sunday.getDate() + 6);
+                
+                startDate = sunday; endDate = saturday;
+                labelText = `${formatDateShort(startDate)} 至 ${formatDateShort(endDate)}`;
+            } else if (state.mode === 'month') {
+                const targetMonth = new Date(now.getFullYear(), now.getMonth() + state.offset, 1);
+                startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+                endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+                labelText = `${startDate.getFullYear()}年 ${startDate.getMonth() + 1}月`;
+            } else if (state.mode === 'year') {
+                const targetYear = now.getFullYear() + state.offset;
+                startDate = new Date(targetYear, 0, 1);
+                endDate = new Date(targetYear, 11, 31);
+                labelText = `${targetYear} 年`;
+            }
+
+            document.getElementById(`chart-date-label-${type}`).innerText = labelText;
+
+            // 過濾並繪製實際記錄數字
+            if (type === 'body') {
+                const filtered = weightHistory.filter(d => { const dt = new Date(d.date); return dt >= startDate && dt <= endDate; });
+                const labels = filtered.map(d => d.date);
+                drawRealValueChart('chart-w', '實際體重 (kg)', labels, filtered.map(d => d.weight), '#0ea5e9');
+                drawRealValueChart('chart-f', '實際體脂率 (%)', labels, filtered.map(d => d.fat), '#f59e0b');
+                drawRealValueChart('chart-m', '實際肌肉量 (kg)', labels, filtered.map(d => d.muscle), '#10b981');
+                drawRealValueChart('chart-v', '內臟脂肪', labels, filtered.map(d => d.visceral), '#ef4444');
+            } else if (type === 'run') {
+                const filtered = runningHistory.filter(d => { const dt = new Date(d.date); return dt >= startDate && dt <= endDate; });
+                const labels = filtered.map(d => d.date);
+                drawRealValueChart('chart-dist', '跑步距離 (km)', labels, filtered.map(d => d.distance), '#3b82f6');
+                drawRealValueChart('chart-speed', '平均速率 (km/h)', labels, filtered.map(d => d.speed), '#8b5cf6');
+                drawRealValueChart('chart-hr', '平均心率 (bpm)', labels, filtered.map(d => d.hr), '#ec4899');
+            }
+        }
+
+        function formatDateShort(d) {
+            return `${d.getDate()}/${d.getMonth()+1}`;
+        }
+
+        // 確保 Y 軸顯示真實數值，不作比例縮放
+        function drawRealValueChart(canvasId, label, labels, data, color) {
+            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length ? labels : ['本區間無記錄'],
+                    datasets: [{ label: label, data: data.length ? data : [0], borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.2, pointRadius: 5 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: true }, tooltip: { callbacks: { label: (ctx) => ` 記錄數值: ${ctx.raw}` } } },
+                    scales: {
+                        y: { beginAtZero: false, title: { display: true, text: '記錄數字' }, ticks: { precision: 1 } },
+                        x: { title: { display: true, text: '記錄日期 (YYYY-MM-DD)' } }
+                    }
+                }
+            });
+        }
+
+        // ================= OCR 辨識 =================
         function runOCR(input, type) {
             if (!input.files || !input.files[0]) return;
             const statusEl = document.getElementById(`ocr-status-${type}`);
-            statusEl.innerText = "🔍 正在進行圖像增強與關鍵字分析...";
-
+            statusEl.innerText = "🔍 正在進行圖像增強與分析...";
             const file = input.files[0];
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    // 透過 Canvas 轉灰階與提高對比，增強 Tesseract 準確度
                     const canvas = document.getElementById('ocr-canvas');
                     const ctx = canvas.getContext('2d');
                     canvas.width = img.width; canvas.height = img.height;
@@ -414,21 +618,15 @@
                     const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     for (let i = 0; i < imgData.data.length; i += 4) {
                         let avg = (imgData.data[i] + imgData.data[i+1] + imgData.data[i+2]) / 3;
-                        avg = avg > 130 ? 255 : 0; // 高對比二值化
+                        avg = avg > 130 ? 255 : 0;
                         imgData.data[i] = avg; imgData.data[i+1] = avg; imgData.data[i+2] = avg;
                     }
                     ctx.putImageData(imgData, 0, 0);
-
                     Tesseract.recognize(canvas.toDataURL('image/png'), 'eng+chi_tra').then(({ data: { text } }) => {
-                        statusEl.innerText = "✅ 辨識完成！系統已分析關鍵字並填入。";
-                        console.log("OCR Text:", text);
-                        parseOCRText(text, type);
+                        statusEl.innerText = "✅ 辨識完成！"; parseOCRText(text, type);
                     }).catch(() => {
-                        // 失敗則試直接用原圖
-                        Tesseract.recognize(file, 'eng').then(({ data: { text } }) => {
-                            statusEl.innerText = "✅ 辨識完成 (原圖模式)！";
-                            parseOCRText(text, type);
-                        }).catch(() => statusEl.innerText = "❌ 辨識失敗，請手動填寫。");
+                        Tesseract.recognize(file, 'eng').then(({ data: { text } }) => { statusEl.innerText = "✅ 辨識完成！"; parseOCRText(text, type); })
+                        .catch(() => statusEl.innerText = "❌ 辨識失敗，請手動填寫。");
                     });
                 };
                 img.src = e.target.result;
@@ -442,50 +640,35 @@
                 for (let line of lines) {
                     if (keywords.some(k => line.toLowerCase().includes(k.toLowerCase()))) {
                         const nums = line.match(/\d+\.\d+|\d+/g) || [];
-                        for (let n of nums) {
-                            let val = parseFloat(n);
-                            if (val >= min && val <= max) return val;
-                        }
+                        for (let n of nums) { let val = parseFloat(n); if (val >= min && val <= max) return val; }
                     }
                 }
-                // Fallback: 在全文中尋找合理區間的數字
                 const allNums = text.match(/\d+\.\d+|\d+/g) || [];
                 return allNums.map(Number).find(val => val >= min && val <= max) || null;
             };
-
             if (type === 'weight') {
-                const w = findNumNear(['重', 'weight', 'kg'], 60, 110);
-                if(w) document.getElementById('w-val').value = w;
-                const f = findNumNear(['脂', 'fat', '%'], 10, 35);
-                if(f && f !== w) document.getElementById('w-fat').value = f;
-                const m = findNumNear(['肌', 'muscle'], 45, 75);
-                if(m && m !== w) document.getElementById('w-muscle').value = m;
-                const v = findNumNear(['內臟', 'visceral'], 1, 20);
-                if(v) document.getElementById('w-visceral').value = v;
-                const bmr = findNumNear(['代謝', 'bmr', 'kcal'], 1300, 2500);
-                if(bmr) document.getElementById('w-bmr').value = bmr;
+                const w = findNumNear(['重', 'weight', 'kg'], 60, 110); if(w) document.getElementById('w-val').value = w;
+                const f = findNumNear(['脂', 'fat', '%'], 10, 35); if(f && f !== w) document.getElementById('w-fat').value = f;
+                const m = findNumNear(['肌', 'muscle'], 45, 75); if(m && m !== w) document.getElementById('w-muscle').value = m;
+                const v = findNumNear(['內臟', 'visceral'], 1, 20); if(v) document.getElementById('w-visceral').value = v;
+                const bmr = findNumNear(['代謝', 'bmr', 'kcal'], 1300, 2500); if(bmr) document.getElementById('w-bmr').value = bmr;
                 calcWeightDiff();
             } else if (type === 'run') {
-                const dist = findNumNear(['公里', 'km', '距離', 'dist'], 0.5, 42);
-                if(dist) document.getElementById('r-dist').value = dist;
-                const hr = findNumNear(['心率', 'hr', 'bpm', '平均'], 80, 200);
-                if(hr) document.getElementById('r-hr').value = hr;
-                const cal = findNumNear(['卡', 'kcal', 'cal'], 50, 2000);
-                if(cal) document.getElementById('r-cal').value = cal;
+                const dist = findNumNear(['公里', 'km', '距離', 'dist'], 0.5, 42); if(dist) document.getElementById('r-dist').value = dist;
+                const hr = findNumNear(['心率', 'hr', 'bpm', '平均'], 80, 200); if(hr) document.getElementById('r-hr').value = hr;
+                const cal = findNumNear(['卡', 'kcal', 'cal'], 50, 2000); if(cal) document.getElementById('r-cal').value = cal;
             }
         }
 
-        // ================= 25歲重訓男生目標差距 =================
         function calcWeightDiff() {
             const w = parseFloat(document.getElementById('w-val').value);
             const f = parseFloat(document.getElementById('w-fat').value);
             const m = parseFloat(document.getElementById('w-muscle').value);
             const v = parseFloat(document.getElementById('w-visceral').value);
-
             updateDiffBadge('diff-w', w, 80.00, "kg", false);
             updateDiffBadge('diff-f', f, 20.0, "%", false);
-            updateDiffBadge('diff-m', m, 62.50, "kg", true); // 肌肉量標準 62.5 kg
-            updateDiffBadge('diff-v', v, 6, "", false);     // 運動員內臟脂肪標準 ≤ 6
+            updateDiffBadge('diff-m', m, 62.50, "kg", true);
+            updateDiffBadge('diff-v', v, 6, "", false);
         }
 
         function updateDiffBadge(elId, current, target, unit, higherIsBetter) {
@@ -507,111 +690,6 @@
             });
         }
 
-        // ================= 重訓智能下拉與快速標籤 =================
-        function addLiftRow() {
-            const container = document.getElementById('lift-items-container');
-            const rowId = 'lift-row-' + Date.now();
-            const div = document.createElement('div');
-            div.className = "form-group";
-            div.style = "background: #f8fafc; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 10px;";
-            div.id = rowId;
-            div.innerHTML = `
-                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                    <input type="text" placeholder="輸入或點擊上方動作..." class="lift-action-input" list="actions-datalist" onchange="checkActionPR(this)" style="flex: 2;">
-                    <select class="lift-type-select" style="flex: 1;"><option value="Free">Free</option><option value="Machine">Machine</option></select>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;">
-                    <input type="number" placeholder="重量(kg)" class="lift-w"><input type="number" placeholder="次數" class="lift-r"><input type="number" placeholder="組數" class="lift-s">
-                </div>
-                <div style="font-size: 11px; color: var(--text-light); margin-top: 6px;">💡 歷史最高紀錄：<span class="pr-text">請選擇動作...</span></div>
-                <button type="button" onclick="document.getElementById('${rowId}').remove()" style="background:none; border:none; color:var(--red); font-size:12px; margin-top:5px; cursor:pointer;">刪除此動作</button>
-            `;
-            container.appendChild(div);
-            filterActions();
-        }
-
-        function filterActions() {
-            const cat = document.getElementById('l-cat').value;
-            let datalist = document.getElementById('actions-datalist');
-            if (!datalist) { datalist = document.createElement('datalist'); datalist.id = "actions-datalist"; document.body.appendChild(datalist); }
-            datalist.innerHTML = "";
-            const pillsBox = document.getElementById('quick-pills-container');
-            pillsBox.innerHTML = "<span style='font-size:12px; color:var(--text-light);'>快選：</span>";
-
-            actionsLibrary.filter(a => a.category === cat).forEach(a => {
-                datalist.innerHTML += `<option value="${a.name}">${a.type}</option>`;
-                pillsBox.innerHTML += `<span class="action-pill" onclick="fillLastLiftInput('${a.name}', '${a.type}')">${a.name} (${a.type})</span>`;
-            });
-        }
-
-        function fillLastLiftInput(name, type) {
-            const inputs = document.querySelectorAll('.lift-action-input');
-            if (inputs.length > 0) {
-                const lastInput = inputs[inputs.length - 1];
-                lastInput.value = name;
-                lastInput.closest('.form-group').querySelector('.lift-type-select').value = type;
-                checkActionPR(lastInput);
-            }
-        }
-
-        function checkActionPR(inputEl) {
-            const actionName = inputEl.value;
-            const prSpan = inputEl.closest('.form-group').querySelector('.pr-text');
-            if (!actionName) { prSpan.innerText = "請選擇動作"; return; }
-            prSpan.innerText = "查詢中...";
-            if (GAS_API_URL.includes("請替換")) { prSpan.innerText = "-- (本地模式)"; return; }
-
-            fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: "getPR", actionName: actionName }) })
-            .then(res => res.json()).then(data => {
-                if (data.status === "success" && data.pr) prSpan.innerHTML = `<strong style="color:var(--primary);">${data.pr.weight} kg</strong> (${data.pr.reps}下, ${data.pr.sets}組)`;
-                else prSpan.innerText = "新動作！";
-            }).catch(() => prSpan.innerText = "--");
-        }
-
-        // ================= 圖表渲染 (Chart.js) =================
-        function renderBodyCharts(days, btnEl) {
-            if (btnEl) {
-                btnEl.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-                btnEl.classList.add('active');
-            }
-            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
-            const filtered = weightHistory.filter(d => new Date(d.date) >= cutoff);
-            const labels = filtered.map(d => d.date.slice(5)); // MM-DD
-
-            drawChart('chart-w', '體重 (kg)', labels, filtered.map(d => d.weight), '#0ea5e9');
-            drawChart('chart-f', '體脂率 (%)', labels, filtered.map(d => d.fat), '#f59e0b');
-            drawChart('chart-m', '肌肉量 (kg)', labels, filtered.map(d => d.muscle), '#10b981');
-            drawChart('chart-v', '內臟脂肪', labels, filtered.map(d => d.visceral), '#ef4444');
-        }
-
-        function renderRunCharts(days, btnEl) {
-            if (btnEl) {
-                btnEl.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-                btnEl.classList.add('active');
-            }
-            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
-            const filtered = runningHistory.filter(d => new Date(d.date) >= cutoff);
-            const labels = filtered.map(d => d.date.slice(5));
-
-            drawChart('chart-dist', '跑步距離 (km)', labels, filtered.map(d => d.distance), '#3b82f6');
-            drawChart('chart-speed', '平均速率 (km/h)', labels, filtered.map(d => d.speed), '#8b5cf6');
-            drawChart('chart-hr', '平均心率 (bpm)', labels, filtered.map(d => d.hr), '#ec4899');
-        }
-
-        function drawChart(canvasId, label, labels, data, color) {
-            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            chartInstances[canvasId] = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels.length ? labels : ['無數據'],
-                    datasets: [{ label: label, data: data.length ? data : [0], borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.3 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: false } } }
-            });
-        }
-
-        // ================= 重訓動作選單庫渲染與刪除 =================
         function renderActionsLibrary() {
             const box = document.getElementById('lib-cards-box');
             box.innerHTML = "";
@@ -627,7 +705,6 @@
             sendDataToGAS("deleteAction", { actionName: name });
         }
 
-        // ================= 辛苦程度評分與發送 =================
         function initScoreButtons() {
             const grid = document.getElementById('score-buttons'); grid.innerHTML = "";
             for (let i = 1; i <= 10; i++) grid.innerHTML += `<div class="score-btn ${i===7?'active':''}" onclick="selectScore(${i}, this)">${i}</div>`;
@@ -650,7 +727,8 @@
                 const date = document.getElementById('l-date').value; const cat = document.getElementById('l-cat').value;
                 const list = [];
                 document.querySelectorAll('#lift-items-container .form-group').forEach(r => {
-                    const name = r.querySelector('.lift-action-input').value;
+                    let name = r.querySelector('.lift-action-select').value;
+                    if (name === "NEW_CUSTOM") name = r.querySelector('.lift-action-custom').value;
                     if (name) list.push({ Date: date, Category: cat, ActionName: name, Type: r.querySelector('.lift-type-select').value, Weight: r.querySelector('.lift-w').value, Reps: r.querySelector('.lift-r').value, Sets: r.querySelector('.lift-s').value, EffortScore: selectedEffortScore });
                 });
                 sendDataToGAS("saveWeightlifting", list);
