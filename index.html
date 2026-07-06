@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人健康終極儀表板 V6</title>
+    <title>個人健康終極儀表板 V6.1</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -64,7 +64,7 @@
         h2 { font-size: 18px; margin-bottom: 15px; color: var(--bg-dark); border-left: 4px solid var(--primary); padding-left: 8px; }
         h3 { font-size: 15px; color: var(--primary-dark); margin: 15px 0 10px 0; }
 
-        /* 日曆 (日一二三四五六) */
+        /* 日曆 (週日排第一格：日一二三四五六) */
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; font-size: 16px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
         .cal-th { text-align: center; font-size: 13px; font-weight: bold; color: var(--primary-dark); padding: 8px 0; background: #e0f2fe; border-radius: 4px; }
@@ -88,11 +88,11 @@
         .diff-badge { font-size: 11px; padding: 2px 6px; border-radius: 10px; font-weight: bold; display: inline-block; }
 
         /* 圖表導航列 */
-        .chart-nav { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .chart-nav { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .chart-filter { display: flex; gap: 6px; }
         .chart-filter button { padding: 6px 12px; font-size: 12px; }
         .chart-filter button.active { background: var(--primary); color: white; }
-        .chart-box { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; height: 260px; }
+        .chart-box { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-bottom: 15px; height: 280px; }
 
         .lib-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
         .lib-card { border: 1px solid var(--border); border-radius: 8px; padding: 15px; background: #f8fafc; }
@@ -115,7 +115,7 @@
 
     <header id="top-header">
         <button class="hamburger" onclick="toggleMobileSidebar()">☰</button>
-        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V6</span>
+        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V6.1</span>
     </header>
 
     <div id="login-screen">
@@ -231,7 +231,7 @@
         </section>
 
         <section id="tab-charts-body" class="section-view">
-            <h2>📈 身體成分趨勢圖表 (顯示實際記錄數字)</h2>
+            <h2>📈 身體成分實際數據圖表 (絕對真實數字，無比較)</h2>
             <div class="chart-nav">
                 <div class="chart-filter">
                     <button class="btn btn-secondary active" onclick="setChartMode('body', 'week', this)">一星期</button>
@@ -244,6 +244,7 @@
                     <button class="btn btn-secondary" style="padding:4px 10px;" onclick="stepChartDate('body', 1)">▶</button>
                 </div>
             </div>
+            <div id="body-summary-list" style="margin-bottom: 20px;"></div>
             <div class="chart-box"><canvas id="chart-w"></canvas></div>
             <div class="chart-box"><canvas id="chart-f"></canvas></div>
             <div class="chart-box"><canvas id="chart-m"></canvas></div>
@@ -251,7 +252,7 @@
         </section>
 
         <section id="tab-charts-run" class="section-view">
-            <h2>📊 跑步表現趨勢圖表 (顯示實際記錄數字)</h2>
+            <h2>📊 跑步表現實際數據圖表 (絕對真實數字，無比較)</h2>
             <div class="chart-nav">
                 <div class="chart-filter">
                     <button class="btn btn-secondary active" onclick="setChartMode('run', 'week', this)">一星期</button>
@@ -264,6 +265,7 @@
                     <button class="btn btn-secondary" style="padding:4px 10px;" onclick="stepChartDate('run', 1)">▶</button>
                 </div>
             </div>
+            <div id="run-summary-list" style="margin-bottom: 20px;"></div>
             <div class="chart-box"><canvas id="chart-dist"></canvas></div>
             <div class="chart-box"><canvas id="chart-speed"></canvas></div>
             <div class="chart-box"><canvas id="chart-hr"></canvas></div>
@@ -304,7 +306,6 @@
         let selectedEffortScore = 7;
         let chartInstances = {};
 
-        // 圖表導航狀態
         let chartState = {
             body: { mode: 'week', offset: 0 },
             run:  { mode: 'week', offset: 0 }
@@ -371,7 +372,6 @@
             sidebar.classList.toggle('collapsed');
             main.classList.toggle('expanded');
             
-            // 當在電腦版收起邊欄時，自動顯示「☰ 展開左側表單」按鈕！
             if (sidebar.classList.contains('collapsed') && window.innerWidth > 768) {
                 reopenBtn.style.display = 'inline-block';
             } else {
@@ -379,7 +379,7 @@
             }
         }
 
-        // ================= 日曆 (週日排第一格：日一二三四五六) =================
+        // ================= 日曆 (日一二三四五六) =================
         function changeMonth(diff) {
             currentMonth += diff;
             if (currentMonth < 0) { currentMonth = 11; currentYear--; }
@@ -392,7 +392,6 @@
             const body = document.getElementById('calendar-body');
             body.innerHTML = "";
             const firstDay = new Date(currentYear, currentMonth, 1);
-            // JS 中 getDay() 正好是 0=週日, 1=週一... 剛好完全對應「日一二三四五六」需要空出的格數！
             let startDayOfWeek = firstDay.getDay(); 
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
@@ -511,7 +510,7 @@
             }).catch(() => prSpan.innerText = "--");
         }
 
-        // ================= 圖表時間區間導航與真實數字顯示 =================
+        // ================= 圖表時間導航 (純 YYYY-MM-DD 比對 + 實際數據明細) =================
         function initChartNav(type) {
             chartState[type].offset = 0;
             updateChartDisplay(type);
@@ -530,25 +529,29 @@
             updateChartDisplay(type);
         }
 
+        // 將 JS Date 物件轉為 YYYY-MM-DD 字串，避開所有時區 Bug
+        function getYMDString(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
         function updateChartDisplay(type) {
             const state = chartState[type];
             const now = new Date();
             let startDate, endDate, labelText = "";
 
             if (state.mode === 'week') {
-                // 以週日為該週起點
-                const currentDayOfWeek = now.getDay();
-                const sunday = new Date(now);
-                sunday.setDate(now.getDate() - currentDayOfWeek + (state.offset * 7));
-                const saturday = new Date(sunday);
-                saturday.setDate(sunday.getDate() + 6);
-                
+                const currentDayOfWeek = now.getDay(); // 0 is Sunday
+                const sunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - currentDayOfWeek + (state.offset * 7));
+                const saturday = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate() + 6);
                 startDate = sunday; endDate = saturday;
                 labelText = `${formatDateShort(startDate)} 至 ${formatDateShort(endDate)}`;
             } else if (state.mode === 'month') {
-                const targetMonth = new Date(now.getFullYear(), now.getMonth() + state.offset, 1);
-                startDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
-                endDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+                const targetDate = new Date(now.getFullYear(), now.getMonth() + state.offset, 1);
+                startDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+                endDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0);
                 labelText = `${startDate.getFullYear()}年 ${startDate.getMonth() + 1}月`;
             } else if (state.mode === 'year') {
                 const targetYear = now.getFullYear() + state.offset;
@@ -557,22 +560,32 @@
                 labelText = `${targetYear} 年`;
             }
 
+            const startYMD = getYMDString(startDate);
+            const endYMD = getYMDString(endDate);
             document.getElementById(`chart-date-label-${type}`).innerText = labelText;
 
-            // 過濾並繪製實際記錄數字
+            // 使用純 YYYY-MM-DD 字串比對，保證點選 ◀ ▶ 時 100% 抓到正確區間的實際數據！
             if (type === 'body') {
-                const filtered = weightHistory.filter(d => { const dt = new Date(d.date); return dt >= startDate && dt <= endDate; });
+                const filtered = weightHistory.filter(d => d.date >= startYMD && d.date <= endYMD);
                 const labels = filtered.map(d => d.date);
-                drawRealValueChart('chart-w', '實際體重 (kg)', labels, filtered.map(d => d.weight), '#0ea5e9');
-                drawRealValueChart('chart-f', '實際體脂率 (%)', labels, filtered.map(d => d.fat), '#f59e0b');
-                drawRealValueChart('chart-m', '實際肌肉量 (kg)', labels, filtered.map(d => d.muscle), '#10b981');
-                drawRealValueChart('chart-v', '內臟脂肪', labels, filtered.map(d => d.visceral), '#ef4444');
+                
+                // 渲染實際數字明細清單
+                renderActualDataList('body-summary-list', filtered, 'body');
+
+                drawRealValueChart('chart-w', '實際體重 (kg)', labels, filtered.map(d => d.weight), '#0ea5e9', 'kg');
+                drawRealValueChart('chart-f', '實際體脂率 (%)', labels, filtered.map(d => d.fat), '#f59e0b', '%');
+                drawRealValueChart('chart-m', '實際肌肉量 (kg)', labels, filtered.map(d => d.muscle), '#10b981', 'kg');
+                drawRealValueChart('chart-v', '內臟脂肪指數', labels, filtered.map(d => d.visceral), '#ef4444', '');
             } else if (type === 'run') {
-                const filtered = runningHistory.filter(d => { const dt = new Date(d.date); return dt >= startDate && dt <= endDate; });
+                const filtered = runningHistory.filter(d => d.date >= startYMD && d.date <= endYMD);
                 const labels = filtered.map(d => d.date);
-                drawRealValueChart('chart-dist', '跑步距離 (km)', labels, filtered.map(d => d.distance), '#3b82f6');
-                drawRealValueChart('chart-speed', '平均速率 (km/h)', labels, filtered.map(d => d.speed), '#8b5cf6');
-                drawRealValueChart('chart-hr', '平均心率 (bpm)', labels, filtered.map(d => d.hr), '#ec4899');
+                
+                // 渲染實際數字明細清單
+                renderActualDataList('run-summary-list', filtered, 'run');
+
+                drawRealValueChart('chart-dist', '跑步距離 (km)', labels, filtered.map(d => d.distance), '#3b82f6', 'km');
+                drawRealValueChart('chart-speed', '平均速率 (km/h)', labels, filtered.map(d => d.speed), '#8b5cf6', 'km/h');
+                drawRealValueChart('chart-hr', '平均心率 (bpm)', labels, filtered.map(d => d.hr), '#ec4899', 'bpm');
             }
         }
 
@@ -580,22 +593,65 @@
             return `${d.getDate()}/${d.getMonth()+1}`;
         }
 
-        // 確保 Y 軸顯示真實數值，不作比例縮放
-        function drawRealValueChart(canvasId, label, labels, data, color) {
+        // 渲染該區間內所有的實際紀錄數字
+        function renderActualDataList(containerId, data, type) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (data.length === 0) {
+                container.innerHTML = `<div style="padding:12px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; text-align:center; font-size:13px; color:var(--text-light);">📭 在所選的時間區間內，尚無相關的實際紀錄。</div>`;
+                return;
+            }
+            let html = `<div style="font-size:13px; font-weight:bold; color:var(--primary-dark); margin-bottom:6px;">📌 該區間內所記錄的「實際數字」明細 (共 ${data.length} 筆)：</div>`;
+            html += `<div style="max-height:130px; overflow-y:auto; border:1px solid var(--border); border-radius:6px; background:#f8fafc; padding:8px;">`;
+            data.forEach(d => {
+                if (type === 'body') {
+                    html += `<div style="font-size:12px; padding:6px 0; border-bottom:1px dashed #e2e8f0; color:var(--text-dark);">📅 <strong>${d.date}</strong> | 體重: <strong style="color:#0ea5e9;">${d.weight} kg</strong> | 體脂: <strong style="color:#f59e0b;">${d.fat} %</strong> | 肌肉: <strong style="color:#10b981;">${d.muscle} kg</strong> | 內臟脂肪: <strong style="color:#ef4444;">${d.visceral}</strong></div>`;
+                } else {
+                    html += `<div style="font-size:12px; padding:6px 0; border-bottom:1px dashed #e2e8f0; color:var(--text-dark);">🏃 <strong>${d.date}</strong> | 距離: <strong style="color:#3b82f6;">${d.distance} km</strong> | 速率: <strong style="color:#8b5cf6;">${d.speed} km/h</strong> | 心率: <strong style="color:#ec4899;">${d.hr} bpm</strong></div>`;
+                }
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        // 確保縱軸顯示真實數值與單位，絕不進行任何比較或壓縮
+        function drawRealValueChart(canvasId, label, labels, data, color, unit) {
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
             const ctx = document.getElementById(canvasId).getContext('2d');
             chartInstances[canvasId] = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels.length ? labels : ['本區間無記錄'],
-                    datasets: [{ label: label, data: data.length ? data : [0], borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.2, pointRadius: 5 }]
+                    labels: labels.length ? labels : ['本區間無紀錄'],
+                    datasets: [{ 
+                        label: label, 
+                        data: data.length ? data : [0], 
+                        borderColor: color, 
+                        backgroundColor: color + '22', 
+                        fill: true, 
+                        tension: 0.2, 
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: true }, tooltip: { callbacks: { label: (ctx) => ` 記錄數值: ${ctx.raw}` } } },
+                    plugins: { 
+                        legend: { display: true }, 
+                        tooltip: { 
+                            callbacks: { 
+                                label: (ctx) => ` 📝 實際紀錄數字: ${ctx.raw} ${unit}` 
+                            } 
+                        } 
+                    },
                     scales: {
-                        y: { beginAtZero: false, title: { display: true, text: '記錄數字' }, ticks: { precision: 1 } },
-                        x: { title: { display: true, text: '記錄日期 (YYYY-MM-DD)' } }
+                        y: { 
+                            beginAtZero: false, 
+                            title: { display: true, text: `紀錄數值 (${unit || '數字'})` }, 
+                            ticks: { 
+                                callback: function(value) { return value + (unit ? ' ' + unit : ''); } 
+                            } 
+                        },
+                        x: { title: { display: true, text: '實際紀錄日期 (YYYY-MM-DD)' } }
                     }
                 }
             });
