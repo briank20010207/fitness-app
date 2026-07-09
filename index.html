@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人健康終極儀表板 </title>
+    <title>個人健康終極儀表板 V6.4</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -87,7 +87,6 @@
         .stat-val { font-size: 20px; font-weight: bold; margin: 4px 0; }
         .diff-badge { font-size: 11px; padding: 2px 6px; border-radius: 10px; font-weight: bold; display: inline-block; }
 
-        /* 圖表導航列 */
         .chart-nav { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .chart-filter { display: flex; gap: 6px; }
         .chart-filter button { padding: 6px 12px; font-size: 12px; }
@@ -106,16 +105,19 @@
         .score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 15px 0; }
         .score-btn { padding: 10px 0; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; cursor: pointer; background: #f8fafc; }
         .score-btn.active { background: var(--red); color: white; border-color: var(--red); }
-        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 100000; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; color: var(--primary); }
+        #loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 100000; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; color: var(--primary); flex-direction: column; }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay">⏳ 資料同步與香港時區校準中...</div>
+    <div id="loading-overlay">
+        <span>⏳ 資料處理與同步中...</span>
+        <span style="font-size:13px; color:var(--text-light); margin-top:8px;">(採用極速香港時區通道)</span>
+    </div>
 
     <header id="top-header">
         <button class="hamburger" onclick="toggleMobileSidebar()">☰</button>
-        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V6.2</span>
+        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V6.4</span>
     </header>
 
     <div id="login-screen">
@@ -124,7 +126,7 @@
             <p style="font-size: 12px; color: var(--text-light); margin-top: 5px;">請輸入 6 位 PIN 碼</p>
             <input type="password" id="pin-input" class="pin-input" maxlength="6" inputmode="numeric" placeholder="••••••">
             <button class="btn" style="width:100%;" onclick="verifyPin()">登入系統</button>
-            <p id="login-error" style="color: var(--red); font-size: 12px; margin-top: 10px; display: none;">PIN 碼錯誤！(預設: 123456)</p>
+            <p id="login-error" style="color: var(--red); font-size: 12px; margin-top: 10px; display: none;">PIN 碼錯誤！(預設: 734646)</p>
         </div>
     </div>
 
@@ -183,7 +185,7 @@
                 <div class="stat-card"><span>肌肉量差距 (62.5 kg)</span><div class="stat-val" id="diff-m">--</div></div>
                 <div class="stat-card"><span>內臟脂肪 (≤ 6)</span><div class="stat-val" id="diff-v">--</div></div>
             </div>
-            <button class="btn" style="width:100%; margin-top:15px;" onclick="submitWeight()">確認儲存體重紀錄</button>
+            <button class="btn" style="width:100%; margin-top:15px;" onclick="submitWeight()">確認儲存並返回日曆 ➔</button>
         </section>
 
         <section id="tab-run" class="section-view">
@@ -206,7 +208,7 @@
                 <div class="form-group"><label>心率範圍</label><input type="text" id="r-hr-range" placeholder="例如: 125-168"></div>
                 <div class="form-group" style="grid-column: span 2;"><label>活動卡路里 (kcal)</label><input type="number" id="r-cal"></div>
             </div>
-            <button class="btn" style="width:100%;" onclick="triggerEffortModal('saveRunning')">下一步：填寫辛苦程度</button>
+            <button class="btn" style="width:100%;" onclick="triggerEffortModal('saveRunning')">下一步：填寫辛苦程度 ➔</button>
         </section>
 
         <section id="tab-lift" class="section-view">
@@ -220,18 +222,18 @@
             <div id="quick-pills-container" style="margin-bottom: 10px;"></div>
             <div id="lift-items-container"></div>
             <button class="btn btn-secondary" style="margin-bottom: 15px; width:100%;" onclick="addLiftRow()">+ 新增動作列</button>
-            <button class="btn" style="width:100%;" onclick="triggerEffortModal('saveWeightlifting')">下一步：填寫辛苦程度並送出</button>
+            <button class="btn" style="width:100%;" onclick="triggerEffortModal('saveWeightlifting')">下一步：填寫辛苦程度並送出 ➔</button>
         </section>
 
         <section id="tab-pingpong" class="section-view">
             <h2>🏓 乒乓球紀錄</h2>
             <div class="form-group"><label>運動日期</label><input type="date" id="p-date"></div>
             <div class="form-group"><label>打球總時長 (分鐘)</label><input type="number" id="p-dur" placeholder="例如: 90"></div>
-            <button class="btn" style="width:100%; margin-top:15px;" onclick="triggerEffortModal('savePingPong')">下一步：填寫辛苦程度</button>
+            <button class="btn" style="width:100%; margin-top:15px;" onclick="triggerEffortModal('savePingPong')">下一步：填寫辛苦程度 ➔</button>
         </section>
 
         <section id="tab-charts-body" class="section-view">
-            <h2>📈 身體成分實際數據圖表 (絕對真實數字，無比較)</h2>
+            <h2>📈 身體成分實際數據圖表 (絕對真實數字，1位小數精度)</h2>
             <div class="chart-nav">
                 <div class="chart-filter">
                     <button class="btn btn-secondary active" onclick="setChartMode('body', 'week', this)">一星期</button>
@@ -284,7 +286,7 @@
             <p style="font-size: 12px; color: var(--text-light); margin-top: 4px;">請評估辛苦程度 (1-10 分)</p>
             <div class="score-grid" id="score-buttons"></div>
             <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-light); margin-bottom: 15px;"><span>1: 輕鬆活動</span><span>10: 極限力竭</span></div>
-            <button class="btn" style="width:100%;" onclick="confirmAndSubmit()">確定並送出試算表</button>
+            <button class="btn" style="width:100%;" onclick="confirmAndSubmit()">確定並儲存，返回日曆 ➔</button>
         </div>
     </div>
 
@@ -292,9 +294,9 @@
 
     <script>
         // ==========================================
-        // ⚠️ 請將此替換為你 Google Apps Script V6 的最新 Web App URL！
+        // ⚠️ 請將此替換為你 Google Apps Script V6.3 的最新 Web App URL！
         // ==========================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxqnKFULwNz4oNrhg7-51CwzMcvMHCoL-IC8RQR-0kyE0H_DNyrRWX4YIVM47T4lqJF/exec";
+        const GAS_API_URL = "https://script.google.com/macros/library/d/13AY7BbbAFUfKPnTKfGEottCVHGQBWxwNFEFFvrsz4D_gYMFlO2zB4yIL/5";
 
         let currentYear = new Date().getFullYear();
         let currentMonth = new Date().getMonth();
@@ -312,7 +314,7 @@
         };
 
         function verifyPin() {
-            if (document.getElementById('pin-input').value === "123456") {
+            if (document.getElementById('pin-input').value === "734646") {
                 document.getElementById('login-screen').style.display = 'none';
                 initApp();
             } else {
@@ -325,17 +327,17 @@
             ['w-date', 'r-date', 'l-date', 'p-date'].forEach(id => document.getElementById(id).value = todayStr);
             initScoreButtons();
             addLiftRow();
-            fetchInitialData();
+            fetchInitialData(false); // 第一次登入顯示 Loading
             if(window.innerWidth <= 768) document.getElementById('close-sidebar-btn').style.display = 'inline-block';
         }
 
-        function fetchInitialData() {
+        function fetchInitialData(isSilent = false) {
             if(GAS_API_URL.includes("請替換")) return;
-            showLoading(true);
+            if(!isSilent) showLoading(true);
             fetch(GAS_API_URL, {
                 method: "POST", body: JSON.stringify({ action: "getInitialData" })
             }).then(res => res.json()).then(data => {
-                showLoading(false);
+                if(!isSilent) showLoading(false);
                 if (data.status === "success") {
                     actionsLibrary = data.actionsList || [];
                     calendarLog = data.calendarLog || {};
@@ -345,7 +347,7 @@
                     filterActions();
                 }
             }).catch(err => {
-                showLoading(false);
+                if(!isSilent) showLoading(false);
                 console.error("API 連線失敗", err);
                 renderCalendar();
             });
@@ -536,26 +538,24 @@
                 const labels = filtered.map(d => d.date);
                 renderActualDataList('body-summary-list', filtered, 'body');
 
-                drawRealValueChart('chart-w', '實際體重 (kg)', labels, filtered.map(d => d.weight), '#0ea5e9', 'kg');
-                drawRealValueChart('chart-f', '實際體脂率 (%)', labels, filtered.map(d => d.fat), '#f59e0b', '%');
-                drawRealValueChart('chart-m', '實際肌肉量 (kg)', labels, filtered.map(d => d.muscle), '#10b981', 'kg');
+                // ⚡ 身體成分圖表：體重、體脂率、肌肉量統一配置 decimals: 1 (強烈鎖定一位小數！)
+                drawRealValueChart('chart-w', '實際體重 (kg)', labels, filtered.map(d => d.weight), '#0ea5e9', 'kg', { decimals: 1 });
+                drawRealValueChart('chart-f', '實際體脂率 (%)', labels, filtered.map(d => d.fat), '#f59e0b', '%', { decimals: 1 });
+                drawRealValueChart('chart-m', '實際肌肉量 (kg)', labels, filtered.map(d => d.muscle), '#10b981', 'kg', { decimals: 1 });
                 drawRealValueChart('chart-v', '內臟脂肪指數', labels, filtered.map(d => d.visceral), '#ef4444', '');
             } else if (type === 'run') {
                 const filtered = runningHistory.filter(d => d.date >= startYMD && d.date <= endYMD);
                 const labels = filtered.map(d => d.date);
                 renderActualDataList('run-summary-list', filtered, 'run');
 
-                // 🏃‍♂️ 1. 跑步距離：範圍 3-10 km，全整數刻度 (間距 1, 精度 0)
                 drawRealValueChart('chart-dist', '跑步距離 (km)', labels, filtered.map(d => d.distance), '#3b82f6', 'km', {
                     min: 3, max: 10, stepSize: 1, precision: 0
                 });
 
-                // ⏱️ 2. 速率 (配速)：範圍 5-9 分鐘，刻度取至最接近 0.5
-                drawRealValueChart('chart-speed', '平均配速/速率 (分鐘/km)', labels, filtered.map(d => d.speed), '#8b5cf6', '分/km', {
+                drawRealValueChart('chart-speed', '平均配速 (分鐘/km)', labels, filtered.map(d => d.speed), '#8b5cf6', '分/km', {
                     min: 5, max: 9, stepSize: 0.5
                 });
 
-                // ❤️ 3. 平均心率：範圍 140-180 bpm，4 為一格 (間距 4, 精度 0)
                 drawRealValueChart('chart-hr', '平均心率 (bpm)', labels, filtered.map(d => d.hr), '#ec4899', 'bpm', {
                     min: 140, max: 180, stepSize: 4, precision: 0
                 });
@@ -564,6 +564,7 @@
 
         function formatDateShort(d) { return `${d.getDate()}/${d.getMonth()+1}`; }
 
+        // 升級：明細清單內體重、體脂、肌肉量強制顯示為 1 位小數
         function renderActualDataList(containerId, data, type) {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -575,16 +576,19 @@
             html += `<div style="max-height:130px; overflow-y:auto; border:1px solid var(--border); border-radius:6px; background:#f8fafc; padding:8px;">`;
             data.forEach(d => {
                 if (type === 'body') {
-                    html += `<div style="font-size:12px; padding:6px 0; border-bottom:1px dashed #e2e8f0; color:var(--text-dark);">📅 <strong>${d.date}</strong> | 體重: <strong style="color:#0ea5e9;">${d.weight} kg</strong> | 體脂: <strong style="color:#f59e0b;">${d.fat} %</strong> | 肌肉: <strong style="color:#10b981;">${d.muscle} kg</strong> | 內臟脂肪: <strong style="color:#ef4444;">${d.visceral}</strong></div>`;
+                    let wStr = Number(d.weight || 0).toFixed(1);
+                    let fStr = Number(d.fat || 0).toFixed(1);
+                    let mStr = Number(d.muscle || 0).toFixed(1);
+                    html += `<div style="font-size:12px; padding:6px 0; border-bottom:1px dashed #e2e8f0; color:var(--text-dark);">📅 <strong>${d.date}</strong> | 體重: <strong style="color:#0ea5e9;">${wStr} kg</strong> | 體脂: <strong style="color:#f59e0b;">${fStr} %</strong> | 肌肉: <strong style="color:#10b981;">${mStr} kg</strong> | 內臟脂肪: <strong style="color:#ef4444;">${d.visceral}</strong></div>`;
                 } else {
-                    html += `<div style="font-size:12px; padding:6px 0; border-bottom:1px dashed #e2e8f0; color:var(--text-dark);">🏃 <strong>${d.date}</strong> | 距離: <strong style="color:#3b82f6;">${d.distance} km</strong> | 速率/配速: <strong style="color:#8b5cf6;">${d.speed} 分/km</strong> | 心率: <strong style="color:#ec4899;">${d.hr} bpm</strong></div>`;
+                    html += `<div style="font-size:12px; padding:6px 0; border-bottom:1px dashed #e2e8f0; color:var(--text-dark);">🏃 <strong>${d.date}</strong> | 距離: <strong style="color:#3b82f6;">${d.distance} km</strong> | 平均配速: <strong style="color:#8b5cf6;">${d.speed} 分/km</strong> | 心率: <strong style="color:#ec4899;">${d.hr} bpm</strong></div>`;
                 }
             });
             html += `</div>`;
             container.innerHTML = html;
         }
 
-        // 升級版圖表繪製：支援 scaleConfig (自訂 min, max, stepSize, precision)
+        // 升級：支援 decimals 小數點位數強制轉換！
         function drawRealValueChart(canvasId, label, labels, data, color, unit, scaleConfig = {}) {
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
             const ctx = document.getElementById(canvasId).getContext('2d');
@@ -607,7 +611,14 @@
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: true }, 
-                        tooltip: { callbacks: { label: (ctx) => ` 📝 實際紀錄數字: ${ctx.raw} ${unit}` } } 
+                        tooltip: { 
+                            callbacks: { 
+                                label: (ctx) => {
+                                    let val = scaleConfig.decimals !== undefined ? Number(ctx.raw).toFixed(scaleConfig.decimals) : ctx.raw;
+                                    return ` 📝 實際紀錄數字: ${val} ${unit}`;
+                                }
+                            } 
+                        } 
                     },
                     scales: {
                         y: { 
@@ -617,8 +628,11 @@
                             title: { display: true, text: `紀錄數值 (${unit || '數字'})` }, 
                             ticks: { 
                                 stepSize: scaleConfig.stepSize !== undefined ? scaleConfig.stepSize : undefined,
-                                precision: scaleConfig.precision !== undefined ? scaleConfig.precision : undefined,
-                                callback: function(value) { return value + (unit ? ' ' + unit : ''); } 
+                                precision: scaleConfig.precision !== undefined ? scaleConfig.precision : (scaleConfig.decimals !== undefined ? scaleConfig.decimals : undefined),
+                                callback: function(value) { 
+                                    let valStr = scaleConfig.decimals !== undefined ? Number(value).toFixed(scaleConfig.decimals) : value;
+                                    return valStr + (unit ? ' ' + unit : ''); 
+                                } 
                             } 
                         },
                         x: { title: { display: true, text: '實際紀錄日期 (YYYY-MM-DD)' } }
@@ -765,7 +779,12 @@
             showLoading(true);
             fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action, payload, actionName: payload.actionName }) })
             .then(res => res.json()).then(data => {
-                showLoading(false); alert("🎉 " + (data.message || "成功！")); fetchInitialData();
+                showLoading(false); 
+                alert("🎉 " + (data.message || "成功！")); 
+                
+                const homeNavBtn = document.querySelector('.nav-list .nav-item:first-child');
+                switchTab('tab-home', homeNavBtn);
+                fetchInitialData(true);
             }).catch(() => { showLoading(false); alert("❌ 連線錯誤！"); });
         }
         function showLoading(show) { document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
