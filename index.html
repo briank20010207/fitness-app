@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>個人健康終極儀表板 V7</title>
+    <title>個人健康終極儀表板 V8</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -45,22 +45,31 @@
         .section-view.active { display: block; }
         h2 { font-size: 18px; margin-bottom: 15px; color: var(--bg-dark); border-left: 4px solid var(--primary); padding-left: 8px; }
 
-        /* 8 欄位日曆設計 (7天 + 1列統計) */
+        /* 8 欄位日曆設計 (增強型卡片顯示) */
         .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; font-size: 16px; }
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr) 1.2fr; gap: 4px; }
         .cal-th { text-align: center; font-size: 13px; font-weight: bold; color: var(--primary-dark); padding: 8px 0; background: #e0f2fe; border-radius: 4px; }
-        .cal-cell { min-height: 80px; border: 1px solid var(--border); border-radius: 6px; padding: 4px; font-size: 12px; position: relative; background: white; display:flex; flex-direction:column; }
+        
+        .cal-cell { min-height: 95px; border: 1px solid var(--border); border-radius: 6px; padding: 5px; font-size: 12px; position: relative; background: white; display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
         .cal-cell.other-month { background: #f8fafc; color: #cbd5e1; border: 1px dashed var(--border); }
-        .icons-box { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 4px; }
-        .work-icon { font-size: 11px; background: #e0f2fe; border-radius: 3px; padding: 1px 3px; }
-        .weight-tag { display: block; font-size: 10px; margin-top: 4px; padding: 2px; border-radius: 3px; text-align: center; font-weight: bold; }
+        .cal-date-num { font-size: 12px; font-weight: bold; color: var(--text-light); margin-bottom: 1px; }
+        
+        /* 1. 體重標籤 (置頂) */
+        .weight-tag { display: block; font-size: 11px; padding: 2px 4px; border-radius: 4px; text-align: center; font-weight: bold; width: 100%; }
         .tag-red { background: #fef2f2; color: var(--red); border: 1px solid #fca5a5; }
         .tag-green { background: #ecfdf5; color: var(--green); border: 1px solid #a7f3d0; }
 
+        /* 2. 運動活動列表 */
+        .activities-box { display: flex; flex-direction: column; gap: 3px; flex-grow: 1; }
+        .act-item { font-size: 10px; padding: 3px 5px; border-radius: 4px; font-weight: 600; line-height: 1.3; display: flex; align-items: center; gap: 3px; word-break: break-all; }
+        .act-run { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .act-pp { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .act-lift { background: #fefce8; color: #854d0e; border: 1px solid #fde047; }
+
         /* 統計欄專屬風格 */
-        .stats-col { background: #fef3c7; border-color: #fde68a; justify-content: center; }
+        .stats-col { background: #fef3c7; border-color: #fde68a; justify-content: flex-start; padding: 6px; }
         .stats-col-title { font-size:11px; font-weight:bold; color:#b45309; text-align:center; margin-bottom:6px; border-bottom:1px solid #fde68a; padding-bottom:3px; }
-        .stats-item { font-size:11px; margin-bottom:3px; color:#92400e; font-weight:500;}
+        .stats-item { font-size:11px; margin-bottom:4px; color:#92400e; font-weight:500;}
 
         .form-group { margin-bottom: 15px; }
         label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: var(--text-dark); }
@@ -102,7 +111,7 @@
 
     <header id="top-header">
         <button class="hamburger" onclick="toggleMobileSidebar()">☰</button>
-        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V7</span>
+        <span style="font-weight: bold; font-size: 16px;">健康管理儀表板 V8</span>
     </header>
 
     <div id="login-screen">
@@ -136,6 +145,7 @@
     <main id="main-content">
         <button id="desktop-reopen-btn" class="btn btn-secondary" style="display:none; margin-bottom: 15px; font-weight:bold; background:#e0f2fe; color:var(--primary-dark);" onclick="toggleSidebarCollapse()">☰ 展開左側表單</button>
 
+        <!-- (1) 日曆 -->
         <section id="tab-home" class="section-view active">
             <h2>📅 我的運動與體重日曆</h2>
             <div class="calendar-header">
@@ -151,6 +161,7 @@
             <div class="calendar-grid" id="calendar-body"></div>
         </section>
 
+        <!-- (2) 體重 -->
         <section id="tab-weight" class="section-view">
             <h2>⚖️ 體重與身體分析 (OCR 智能辨識)</h2>
             <div class="form-group"><label>選擇紀錄日期</label><input type="date" id="w-date"></div>
@@ -177,6 +188,7 @@
             <button class="btn" style="width:100%; margin-top:15px;" onclick="submitWeight()">確認儲存並返回日曆 ➔</button>
         </section>
 
+        <!-- (3) 跑步 -->
         <section id="tab-run" class="section-view">
             <h2>🏃‍♂️ 跑步紀錄 (支援心率與 OCR)</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -200,6 +212,7 @@
             <button class="btn" style="width:100%;" onclick="triggerEffortModal('saveRunning')">下一步：填寫辛苦程度 ➔</button>
         </section>
 
+        <!-- (4) 重訓 -->
         <section id="tab-lift" class="section-view">
             <h2>🏋️ 重量訓練 (實體選單 + 自訂動作)</h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -214,6 +227,7 @@
             <button class="btn" style="width:100%;" onclick="triggerEffortModal('saveWeightlifting')">下一步：填寫辛苦程度並送出 ➔</button>
         </section>
 
+        <!-- (5) 乒乓球 -->
         <section id="tab-pingpong" class="section-view">
             <h2>🏓 乒乓球紀錄</h2>
             <div class="form-group"><label>運動日期</label><input type="date" id="p-date"></div>
@@ -221,6 +235,7 @@
             <button class="btn" style="width:100%; margin-top:15px;" onclick="triggerEffortModal('savePingPong')">下一步：填寫辛苦程度 ➔</button>
         </section>
 
+        <!-- (6) 身體數據圖表 -->
         <section id="tab-charts-body" class="section-view">
             <h2>📈 身體成分圖表 (絕對數字，1位小數)</h2>
             <div class="chart-nav">
@@ -242,6 +257,7 @@
             <div class="chart-box"><canvas id="chart-v"></canvas></div>
         </section>
 
+        <!-- (7) 跑步數據圖表 -->
         <section id="tab-charts-run" class="section-view">
             <h2>📊 跑步表現圖表 (自訂範圍與刻度)</h2>
             <div class="chart-nav">
@@ -262,6 +278,7 @@
             <div class="chart-box"><canvas id="chart-hr"></canvas></div>
         </section>
 
+        <!-- (8) 重訓動作選單庫 -->
         <section id="tab-actions-lib" class="section-view">
             <h2>📋 重訓動作專屬選單庫</h2>
             <div class="lib-grid" id="lib-cards-box"></div>
@@ -282,9 +299,9 @@
 
     <script>
         // ==========================================
-        // 🚨 極重要：請在下方的引號中，貼上你最新部署的、以 /exec 結尾的 Web App 網址！
+        // 🚨 極重要：請在下方的引號中，填入你最新部署、以 /exec 結尾的正確網址！
         // ==========================================
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwT7RRDGMAJuivGdKnqw1iGCp5BH_gI1_XzWd2TI804slNfXiSO-zvwgbkwP0fCMi89/exec";
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbz8du-FkVJqudrWopejhvrG6TYBzr58RlH9Jqo0AXouaWIEDQpGQflQFuDxc9WS98XK/exec";
 
         let currentYear = new Date().getFullYear();
         let currentMonth = new Date().getMonth();
@@ -314,11 +331,8 @@
         }
 
         function fetchInitialData(isSilent = false) {
-            // 安全防護：檢查網址是否依然是無效的 library 網址或範例字串
             if(GAS_API_URL.includes("請填入") || GAS_API_URL.includes("/library/")) {
-                if(!isSilent) {
-                    alert("🚨 連線失敗！\n\n您目前貼在程式碼裡的網址不正確。\n請前往 Google Apps Script 點擊右上角的「部署」>「新增部署作業」，取得以「/exec」結尾的網址後再貼上！");
-                }
+                if(!isSilent) alert("🚨 連線失敗！\n\n您目前貼在程式碼裡的網址不正確。\n請前往 Google Apps Script 點擊右上角的「部署」>「新增部署作業」，取得以「/exec」結尾的網址後再貼上！");
                 return;
             }
             if(!isSilent) showLoading(true);
@@ -367,7 +381,7 @@
             renderCalendar();
         }
 
-        // 🌟 星期五量體重 + 右側每週統計
+        // ================= V8 升級：卡片式日曆渲染 (體重置頂 + 訓練數據與時長) =================
         function renderCalendar() {
             document.getElementById('cal-month-title').innerText = `${currentYear} 年 ${currentMonth + 1} 月`;
             const body = document.getElementById('calendar-body');
@@ -388,22 +402,49 @@
                 const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
                 const log = calendarLog[dateStr] || {};
-                let iconsHtml = "";
                 
-                if (log.weightlifting) { iconsHtml += `<span class="work-icon">🏋️</span>`; weekStats.lift++; }
-                if (log.run) { iconsHtml += `<span class="work-icon">🏃</span>`; weekStats.run++; weekStats.runDist += (log.runDist || 0); }
-                if (log.pingpong) { iconsHtml += `<span class="work-icon">🏓</span>`; weekStats.pp++; }
-
+                // 1. 體重標籤 (優先級最高，放最頂部)
                 let weightHtml = "";
-                // 👉 星期五 (dayOfWeek === 5) 提醒量體重
-                if (dayOfWeek === 5) {
+                if (dayOfWeek === 5) { // 星期五提醒量體重
                     weightHtml = log.weight ? `<span class="weight-tag tag-green">⚖️ ${log.weight}kg</span>` : `<span class="weight-tag tag-red">⚠️ 量體重</span>`;
                 } else if (log.weight) {
                     weightHtml = `<span class="weight-tag tag-green">⚖️ ${log.weight}kg</span>`;
                 }
 
-                body.innerHTML += `<div class="cal-cell"><div class="cal-date-num">${day}</div><div class="icons-box">${iconsHtml}</div>${weightHtml}</div>`;
+                // 2. 運動卡片項目 (跑步距離與速率、乒乓球小時數、重訓部位)
+                let activitiesHtml = "";
+                
+                if (log.run) {
+                    const dist = log.runDist ? Number(log.runDist).toFixed(1) : "0.0";
+                    const pace = log.runPace ? log.runPace : "-";
+                    activitiesHtml += `<div class="act-item act-run">🏃 ${dist}km (${pace}分/km)</div>`;
+                    weekStats.run++; 
+                    weekStats.runDist += (log.runDist || 0);
+                }
+                
+                if (log.pingpong) {
+                    // 將分鐘轉換為小時 (例如 90分鐘 => 1.5小時)
+                    const hours = log.pingpongDur ? parseFloat((log.pingpongDur / 60).toFixed(1)) : 0;
+                    activitiesHtml += `<div class="act-item act-pp">🏓 ${hours} 小時</div>`;
+                    weekStats.pp++;
+                }
+                
+                if (log.weightlifting) {
+                    // 把當天練的所有部位拼起來，例如 "胸三頭, 背二頭"
+                    const cats = (log.liftCats && log.liftCats.length > 0) ? log.liftCats.join(', ') : '重量訓練';
+                    activitiesHtml += `<div class="act-item act-lift">🏋️ ${cats}</div>`;
+                    weekStats.lift++;
+                }
 
+                // 按照順序插入：日期 -> 體重(最上方) -> 運動活動(下方)
+                body.innerHTML += `
+                    <div class="cal-cell">
+                        <div class="cal-date-num">${day}</div>
+                        ${weightHtml}
+                        <div class="activities-box">${activitiesHtml}</div>
+                    </div>`;
+
+                // 結算日 (週六，或是該月最後一天)
                 if (dayOfWeek === 6 || day === daysInMonth) {
                     if (day === daysInMonth && dayOfWeek !== 6) {
                         for(let i = dayOfWeek + 1; i <= 6; i++) {
@@ -576,10 +617,10 @@
             });
         }
 
-        function runOCR(input, type) { /* 保留 OCR 邏輯 */ }
-        function calcWeightDiff() { /* 保留差距計算邏輯 */ }
+        function runOCR(input, type) { /* OCR 邏輯 */ }
+        function calcWeightDiff() { /* 差距計算邏輯 */ }
         function submitWeight() { sendDataToGAS("saveWeight", { Date: document.getElementById('w-date').value, Weight: document.getElementById('w-val').value, BodyFat: document.getElementById('w-fat').value, MuscleMass: document.getElementById('w-muscle').value, BMR: document.getElementById('w-bmr').value, VisceralFat: document.getElementById('w-visceral').value, BodyAge: document.getElementById('w-age').value }); }
-        function renderActionsLibrary() { /* 保留邏輯 */ }
+        function renderActionsLibrary() { /* 選單庫邏輯 */ }
         function deleteAction(name) { if (confirm(`刪除「${name}」？`)) sendDataToGAS("deleteAction", { actionName: name }); }
 
         function initScoreButtons() { const grid = document.getElementById('score-buttons'); grid.innerHTML = ""; for (let i = 1; i <= 10; i++) grid.innerHTML += `<div class="score-btn ${i===7?'active':''}" onclick="selectScore(${i}, this)">${i}</div>`; }
